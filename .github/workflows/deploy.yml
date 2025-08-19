@@ -1,0 +1,138 @@
+name: Deploy to Cloudflare
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_id:
+        description: 'Deployment ID'
+        required: true
+      branch:
+        description: 'Branch to deploy'
+        required: true
+      bucket_name:
+        description: 'Name of the bucket to upload the files to'
+        required: true
+      urls:
+        description: 'URLs to configure (comma-separated)'
+        required: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'yarn'
+          
+      - name: Install dependencies
+        run: yarn
+        
+      - name: Build application
+        id: build
+        run: yarn build > build.log 2>&1
+          
+      - name: Upload to r2
+        id: upload-to-r2
+        env:
+
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+          PROJECT_ID: "6889fc667affd74cd7a43601"
+        run: |
+          # Install wrangler
+          npm install -g wrangler
+          
+          # Upload all built files to r2
+          find dist -type f | while read file; do
+            # Remove 'dist/' prefix for key
+            key=$(echo "$file" | sed 's|^dist/||')
+            echo "Uploading $file to ${{ github.event.inputs.bucket_name }}/${{ github.event.inputs.deployment_id }}/$key"
+            wrangler r2 object put "${{ github.event.inputs.bucket_name }}/${{ github.event.inputs.deployment_id }}/$key" --file="$file" --remote
+          done
+          
+      - name: Notify deployment completion
+        env:
+          DEPLOYMENT_API_URL: ${{ secrets.DEPLOYMENT_API_URL }}
+          API_KEY: ${{ secrets.API_KEY }}
+        run: |
+          curl -X POST "$DEPLOYMENT_API_URL/deployment-complete" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $API_KEY" \
+            -d "$(jq -n \
+                --arg deployment_id "${{ github.event.inputs.deployment_id }}" \
+                --arg project_id "6889fc667affd74cd7a43601" \
+                --arg status "success" \
+                --arg commit_sha "${{ github.sha }}" \
+                --arg urls "${{ github.event.inputs.urls || 'auto' }}" \
+                '{
+                  deployment_id: $deployment_id,
+                  project_id: $project_id,
+                  status: $status,
+                  commit_sha: $commit_sha,
+                  urls: $urls
+                }')"
+            
+      - name: Notify deployment failure
+        if: failure()
+        env:
+          DEPLOYMENT_API_URL: ${{ secrets.DEPLOYMENT_API_URL }}
+          API_KEY: ${{ secrets.API_KEY }}
+        run: |
+          FAILED_STEP="Unknown"
+          
+          # Get the last 100 lines of the build log if it exists
+          if [ -f build.log ]; then
+            BUILD_LOG="$(tail -n 100 build.log)"
+          else
+            BUILD_LOG="No build log found."
+          fi
+          
+          # Determine the specific failure reason based on step context
+          if [ "${{ steps.build.outcome }}" == "failure" ]; then
+            FAILED_STEP="Build"
+            ERROR_MESSAGE="Build step failed - check build logs for details"
+          elif [ "${{ steps.upload-to-r2.outcome }}" == "failure" ]; then
+            FAILED_STEP="Upload to r2"
+            ERROR_MESSAGE="Failed to upload files to Cloudflare R2"
+          else
+            FAILED_STEP="Deployment"
+            ERROR_MESSAGE="Deployment process failed - check workflow logs"
+          fi
+
+          echo "Step $FAILED_STEP failed"
+          echo "$ERROR_MESSAGE"
+          echo "Build logs: $BUILD_LOG"
+          
+          curl -X POST "$DEPLOYMENT_API_URL/deployment-complete" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $API_KEY" \
+            -d "$(jq -n \
+                --arg deployment_id "${{ github.event.inputs.deployment_id }}" \
+                --arg project_id "6889fc667affd74cd7a43601" \
+                --arg status "failed" \
+                --arg commit_sha "${{ github.sha }}" \
+                --arg urls "${{ github.event.inputs.urls || 'auto' }}" \
+                --arg error_message "$ERROR_MESSAGE" \
+                --arg failed_step "$FAILED_STEP" \
+                --arg build_log "$BUILD_LOG" \
+                --arg workflow_run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+                '{
+                  deployment_id: $deployment_id,
+                  project_id: $project_id,
+                  status: $status,
+                  commit_sha: $commit_sha,
+                  urls: $urls,
+                  error_message: $error_message,
+                  failed_step: $failed_step,
+                  build_log: $build_log,
+                  workflow_run_url: $workflow_run_url
+                }')"
