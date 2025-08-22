@@ -17,7 +17,7 @@ const Sidebar = lazy(() => import("./components/Sidebar"));
 
 // Layout component
 const Layout = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
+  <div className=" w-screen flex min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
     <Sidebar />
     <div className="flex-1 ml-64">
       {children}

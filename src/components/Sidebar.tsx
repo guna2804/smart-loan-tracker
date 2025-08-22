@@ -10,7 +10,6 @@ import {
   Settings,
   Shield,
   LogOut,
-  User
 } from "lucide-react";
 
 const navigation = [
@@ -71,7 +70,7 @@ export default function Sidebar() {
         {/* User Profile & Footer */}
         <div className="px-4 py-4 border-t border-gray-200 space-y-2">
           {/* User Info */}
-          <Link
+          {/* <Link
             to="/settings"
             className="flex items-center px-4 py-2 text-sm text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
           >
@@ -80,7 +79,7 @@ export default function Sidebar() {
               <p className="font-medium text-gray-900 truncate">{user?.fullName}</p>
               <p className="text-xs text-gray-500 truncate">{user?.email}</p>
             </div>
-          </Link>
+          </Link> */}
           
           {/* Settings Link */}
           <Link
