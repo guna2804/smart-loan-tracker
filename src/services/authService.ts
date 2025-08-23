@@ -22,94 +22,78 @@ export interface AuthResponse {
   token?: string;
 }
 
-const MOCK_DELAY = 800;
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const API_BASE = "https://localhost:7257/api/Auth";
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    await delay(MOCK_DELAY);
-    
     try {
-      const mockUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
-      const user = mockUsers.find((u: { email: string; password: string; id: string; fullName: string }) => 
-        u.email === credentials.email && u.password === credentials.password
-      );
-      
-      if (user) {
-        const token = `mock-token-${Date.now()}`;
-        const userData = {
-          id: user.id,
-          fullName: user.fullName,
-          email: user.email
-        };
-        
+      const response = await fetch(`${API_BASE}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: credentials.email,
+          password: credentials.password
+        })
+      });
+      if (!response.ok) {
         return {
-          success: true,
-          message: 'Login successful',
-          user: userData,
-          token
+          success: false,
+          message: "Invalid email or password"
         };
       }
-      
+      const data = await response.json();
       return {
-        success: false,
-        message: 'Invalid email or password'
+        success: true,
+        message: "Login successful",
+        user: data.user,
+        token: data.token
       };
     } catch {
       return {
         success: false,
-        message: 'Login failed. Please try again.'
+        message: "Login failed. Please try again."
       };
     }
   },
 
   async signup(data: SignupData): Promise<AuthResponse> {
-    await delay(MOCK_DELAY);
-    
     try {
-      const mockUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
-      
-      if (mockUsers.find((u: { email: string }) => u.email === data.email)) {
+      const response = await fetch(`${API_BASE}/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          name: data.fullName
+        })
+      });
+      if (!response.ok) {
         return {
           success: false,
-          message: 'Email already registered'
+          message: "Registration failed. Please try again."
         };
       }
-      
-      const newUser = {
-        id: `user-${Date.now()}`,
-        fullName: data.fullName,
-        email: data.email,
-        password: data.password
-      };
-      
-      mockUsers.push(newUser);
-      localStorage.setItem('mockUsers', JSON.stringify(mockUsers));
-      
-      const token = `mock-token-${Date.now()}`;
-      const userData = {
-        id: newUser.id,
-        fullName: newUser.fullName,
-        email: newUser.email
-      };
-      
+      const result = await response.json();
       return {
         success: true,
-        message: 'Account created successfully',
-        user: userData,
-        token
+        message: "Account created successfully",
+        user: result.user,
+        token: result.token
       };
     } catch {
       return {
         success: false,
-        message: 'Registration failed. Please try again.'
+        message: "Registration failed. Please try again."
       };
     }
   },
 
   async logout(): Promise<void> {
-    await delay(300);
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
     sessionStorage.removeItem('authToken');

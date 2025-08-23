@@ -1,10 +1,17 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { authService } from '../services/authService';
+import { jwtDecode } from 'jwt-decode';
 
 export interface User {
   id: string;
   fullName: string;
   email: string;
+}
+
+interface DecodedToken {
+  sub: string; 
+  email: string; 
+  [key: string]: any; 
 }
 
 interface AuthContextType {
@@ -36,51 +43,71 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     const userData = localStorage.getItem('userData');
-    
+    console.log('AuthProvider useEffect: token=', token, 'userData=', userData);
     if (token && userData) {
       try {
-        setUser(JSON.parse(userData));
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        console.log('User set from localStorage:', parsedUser);
       } catch (error) {
+        console.error('Error parsing userData:', error);
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
       }
+    } else if (token) {
+      // Fallback: Decode token to construct user if userData is missing
+      try {
+        const decoded: DecodedToken = jwtDecode(token);
+        const fallbackUser: User = {
+          id: decoded.sub || '',
+          email: decoded.email || '',
+          fullName: decoded.name || 'User', // Use a fallback name if not available
+        };
+        setUser(fallbackUser);
+        localStorage.setItem('userData', JSON.stringify(fallbackUser));
+        console.log('User set from token:', fallbackUser);
+      } catch (error) {
+        console.error('Error decoding token:', error);
+        localStorage.removeItem('authToken');
+      }
     }
-    
     setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string, rememberMe = false): Promise<boolean> => {
     setIsLoading(true);
-    
     try {
-      const mockUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
-      const foundUser = mockUsers.find((u: { email: string; password: string; id: string; fullName: string }) => u.email === email && u.password === password);
-      
-      if (foundUser) {
-        const userData = {
-          id: foundUser.id,
-          fullName: foundUser.fullName,
-          email: foundUser.email
-        };
-        
-        const token = `mock-token-${Date.now()}`;
-        
+      const response = await authService.login({ email, password, rememberMe });
+      console.log('Login response:', response);
+      if (response.success && response.token) {
+        let userData: User;
+        if (response.user) {
+          userData = response.user;
+        } else {
+          // Fallback: Decode token to construct user
+          const decoded: DecodedToken = jwtDecode(response.token);
+          userData = {
+            id: decoded.sub || '',
+            email: decoded.email || email, // Use provided email as fallback
+            fullName: decoded.name || 'User', // Use a default name
+          };
+        }
         if (rememberMe) {
-          localStorage.setItem('authToken', token);
+          localStorage.setItem('authToken', response.token);
           localStorage.setItem('userData', JSON.stringify(userData));
         } else {
-          sessionStorage.setItem('authToken', token);
+          sessionStorage.setItem('authToken', response.token);
           sessionStorage.setItem('userData', JSON.stringify(userData));
         }
-        
         setUser(userData);
+        console.log('User set after login:', userData);
         setIsLoading(false);
         return true;
       }
-      
       setIsLoading(false);
       return false;
-    } catch {
+    } catch (error) {
+      console.error('Login error:', error);
       setIsLoading(false);
       return false;
     }
@@ -88,39 +115,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signup = async (fullName: string, email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    
     try {
-      const mockUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
-      
-      if (mockUsers.find((u: { email: string }) => u.email === email)) {
+      const response = await authService.signup({ fullName, email, password, confirmPassword: password });
+      console.log('Signup response:', response);
+      if (response.success && response.token && response.user) {
+        localStorage.setItem('authToken', response.token);
+        localStorage.setItem('userData', JSON.stringify(response.user));
+        setUser(response.user);
+        console.log('User set after signup:', response.user);
         setIsLoading(false);
-        return false;
+        return true;
       }
-      
-      const newUser = {
-        id: `user-${Date.now()}`,
-        fullName,
-        email,
-        password
-      };
-      
-      mockUsers.push(newUser);
-      localStorage.setItem('mockUsers', JSON.stringify(mockUsers));
-      
-      const userData = {
-        id: newUser.id,
-        fullName: newUser.fullName,
-        email: newUser.email
-      };
-      
-      const token = `mock-token-${Date.now()}`;
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('userData', JSON.stringify(userData));
-      
-      setUser(userData);
       setIsLoading(false);
-      return true;
-    } catch {
+      return false;
+    } catch (error) {
+      console.error('Signup error:', error);
       setIsLoading(false);
       return false;
     }
@@ -132,6 +141,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     sessionStorage.removeItem('authToken');
     sessionStorage.removeItem('userData');
     setUser(null);
+    console.log('User logged out, user set to null');
   };
 
   const value = {
@@ -143,7 +153,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    
     <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>

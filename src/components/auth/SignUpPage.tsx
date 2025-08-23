@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -21,7 +20,6 @@ const SignUpPage = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { signup } = useAuth();
   const navigate = useNavigate();
 
   const handleInputChange = (field: string, value: string) => {
@@ -85,12 +83,14 @@ const SignUpPage = () => {
     setIsLoading(true);
 
     try {
-      const success = await signup(formData.fullName, formData.email, formData.password);
-
-      if (success) {
+      const response = await authService.signup(formData);
+      if (response.success && response.token) {
+        // Store token and user data as needed
+        localStorage.setItem('authToken', response.token);
+        localStorage.setItem('userData', JSON.stringify(response.user));
         navigate('/');
       } else {
-        setError('Email is already registered. Please use a different email.');
+        setError(response.message || 'Email is already registered. Please use a different email.');
       }
     } catch {
       setError('Registration failed. Please try again.');

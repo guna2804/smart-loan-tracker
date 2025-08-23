@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -8,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Checkbox } from '../ui/checkbox';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { authService } from '../../services/authService';
+import { useAuth } from '../../contexts/AuthContext';
+
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -21,27 +21,31 @@ const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     if (!email || !password) {
       setError('Please fill in all fields');
       return;
     }
 
-    if (!authService.validateEmail(email)) {
+    if (!validateEmail(email)) {
       setError('Please enter a valid email address');
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
-      const success = await login(email, password, rememberMe);
-      
-      if (success) {
-        navigate('/');
+      const response = await login(email, password, rememberMe);
+      if (response) {
+        navigate('/', { replace: true });
       } else {
         setError('Invalid email or password');
       }

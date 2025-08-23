@@ -137,14 +137,14 @@ const RepaymentLog = () => {
   const totalPrincipal = filteredRepayments.reduce((sum, repayment) => sum + repayment.principalAmount, 0);
 
   return (
-    <div className="p-8 space-y-8">
+  <div className="p-4 sm:p-6 md:p-8 space-y-8 max-w-full">
       {/* Header */}
-      <div className="flex items-center justify-between">
+  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Repayment Log</h1>
-          <p className="text-gray-600 mt-1">Track all loan repayments and payments</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Repayment Log</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Track all loan repayments and payments</p>
         </div>
-        <div className="flex space-x-3">
+  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
           <Button variant="outline" className="flex items-center">
             <Download className="w-4 h-4 mr-2" />
             Export
@@ -156,12 +156,12 @@ const RepaymentLog = () => {
                 Add Payment
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Record New Payment</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="loanId">Select Loan</Label>
                     <Select 
@@ -193,7 +193,7 @@ const RepaymentLog = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="amount">Payment Amount ($)</Label>
                     <Input
@@ -224,7 +224,7 @@ const RepaymentLog = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="principalAmount">Principal Amount ($)</Label>
                     <Input
@@ -259,7 +259,7 @@ const RepaymentLog = () => {
                   />
                 </div>
 
-                <div className="flex justify-end space-x-3">
+                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                   <Button type="button" variant="outline" onClick={resetForm}>
                     Cancel
                   </Button>
@@ -274,10 +274,10 @@ const RepaymentLog = () => {
       </div>
 
       {/* Filters and Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
               <Filter className="w-4 h-4 text-gray-500" />
               <Label htmlFor="filterType">Filter by Type</Label>
             </div>
@@ -309,7 +309,7 @@ const RepaymentLog = () => {
 
         <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
               <div>
                 <p className="text-sm text-green-800">Total Payments</p>
                 <p className="text-2xl font-bold text-green-900">${totalRepayments.toLocaleString()}</p>
@@ -321,7 +321,7 @@ const RepaymentLog = () => {
 
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
               <div>
                 <p className="text-sm text-blue-800">Total Interest</p>
                 <p className="text-2xl font-bold text-blue-900">${totalInterest.toLocaleString()}</p>
@@ -333,7 +333,7 @@ const RepaymentLog = () => {
 
         <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
               <div>
                 <p className="text-sm text-purple-800">Total Principal</p>
                 <p className="text-2xl font-bold text-purple-900">${totalPrincipal.toLocaleString()}</p>
@@ -366,8 +366,8 @@ const RepaymentLog = () => {
           ) : (
             <div className="space-y-4">
               {filteredRepayments.map((repayment) => (
-                <div key={repayment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center space-x-4">
+                <div key={repayment.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-4 sm:gap-0">
+                  <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                       repayment.loanType === 'lending' 
                         ? 'bg-green-100 text-green-600' 
@@ -379,7 +379,7 @@ const RepaymentLog = () => {
                       <h3 className="font-semibold text-gray-900">
                         {repayment.loanType === 'lending' ? repayment.borrowerName : repayment.lenderName}
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs sm:text-sm text-gray-500">
                         {new Date(repayment.paymentDate).toLocaleDateString()} • 
                         <Badge variant="outline" className="ml-2">
                           {repayment.paymentType}
@@ -388,11 +388,11 @@ const RepaymentLog = () => {
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <div className="font-bold text-lg text-gray-900">
+                  <div className="text-left sm:text-right w-full sm:w-auto">
+                    <div className="font-bold text-base sm:text-lg text-gray-900">
                       ${repayment.amount.toLocaleString()}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs sm:text-sm text-gray-500">
                       Principal: ${repayment.principalAmount.toLocaleString()}
                       {repayment.interestAmount > 0 && (
                         <span className="ml-2">Interest: ${repayment.interestAmount.toLocaleString()}</span>
@@ -400,7 +400,7 @@ const RepaymentLog = () => {
                     </div>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-center w-full sm:w-auto">
                     <Badge variant={repayment.loanType === 'lending' ? 'default' : 'secondary'}>
                       {repayment.loanType === 'lending' ? 'Received' : 'Paid'}
                     </Badge>
