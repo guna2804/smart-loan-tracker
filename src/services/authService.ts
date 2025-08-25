@@ -16,34 +16,30 @@ export interface AuthResponse {
   message: string;
   user?: {
     id: string;
-    fullName: string;
+    name: string;   // backend expects "Name"
     email: string;
   };
   token?: string;
 }
 
-
-const API_BASE = "https://localhost:7257/api/Auth";
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/auth`;
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
       const response = await fetch(`${API_BASE}/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: credentials.email,
           password: credentials.password
         })
       });
+
       if (!response.ok) {
-        return {
-          success: false,
-          message: "Invalid email or password"
-        };
+        return { success: false, message: "Invalid email or password" };
       }
+
       const data = await response.json();
       return {
         success: true,
@@ -52,10 +48,7 @@ export const authService = {
         token: data.token
       };
     } catch {
-      return {
-        success: false,
-        message: "Login failed. Please try again."
-      };
+      return { success: false, message: "Login failed. Please try again." };
     }
   },
 
@@ -63,21 +56,18 @@ export const authService = {
     try {
       const response = await fetch(`${API_BASE}/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: data.email,
           password: data.password,
-          name: data.fullName
+          name: data.fullName   // ✅ matches your backend RegisterDto
         })
       });
+
       if (!response.ok) {
-        return {
-          success: false,
-          message: "Registration failed. Please try again."
-        };
+        return { success: false, message: "Registration failed. Please try again." };
       }
+
       const result = await response.json();
       return {
         success: true,
@@ -86,18 +76,13 @@ export const authService = {
         token: result.token
       };
     } catch {
-      return {
-        success: false,
-        message: "Registration failed. Please try again."
-      };
+      return { success: false, message: "Registration failed. Please try again." };
     }
   },
 
   async logout(): Promise<void> {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
-    sessionStorage.removeItem('authToken');
-    sessionStorage.removeItem('userData');
+    localStorage.removeItem(import.meta.env.VITE_AUTH_TOKEN_KEY);
+    sessionStorage.removeItem(import.meta.env.VITE_AUTH_TOKEN_KEY);
   },
 
   validateEmail(email: string): boolean {
