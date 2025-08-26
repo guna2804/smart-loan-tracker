@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Alert, AlertDescription } from '../ui/alert';
 import { Loader2, Eye, EyeOff, Check, X } from 'lucide-react';
 import { authService } from '../../services/authService';
+import { useToast } from '../../hooks/use-toast';
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
@@ -21,6 +22,7 @@ const SignUpPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -85,6 +87,11 @@ const SignUpPage = () => {
     try {
       const response = await authService.signup(formData);
       if (response.success && response.token) {
+        toast({
+          variant: "success",
+          title: "Account Created Successfully",
+          description: "Welcome to MoneyBoard!",
+        });
         // Store token and user data as needed
         localStorage.setItem('authToken', response.token);
         localStorage.setItem('userData', JSON.stringify(response.user));

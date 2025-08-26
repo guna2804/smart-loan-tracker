@@ -8,6 +8,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../hooks/use-toast';
 
 
 const LoginPage = () => {
@@ -20,6 +21,7 @@ const LoginPage = () => {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -45,6 +47,11 @@ const LoginPage = () => {
     try {
       const response = await login(email, password, rememberMe);
       if (response) {
+        toast({
+          variant: "success",
+          title: "Login Successful",
+          description: "Welcome back to MoneyBoard!",
+        });
         navigate('/', { replace: true });
       } else {
         setError('Invalid email or password');
