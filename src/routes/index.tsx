@@ -11,6 +11,7 @@ const EMICalculator = lazy(() => import("../components/EMICalculator"));
 const Settings = lazy(() => import("../components/Settings"));
 const LoginPage = lazy(() => import("../components/auth/LoginPage"));
 const SignUpPage = lazy(() => import("../components/auth/SignUpPage"));
+const ForgotPasswordPage = lazy(() => import("../components/auth/ForgotPasswordPage"));
 
 export const router = createBrowserRouter([
   {
@@ -26,6 +27,14 @@ export const router = createBrowserRouter([
     element: (
       <PublicRoute>
         <SignUpPage />
+      </PublicRoute>
+    ),
+  },
+  {
+    path: "/forgot-password",
+    element: (
+      <PublicRoute>
+        <ForgotPasswordPage />
       </PublicRoute>
     ),
   },

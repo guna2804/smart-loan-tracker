@@ -107,12 +107,12 @@ const Dashboard = () => {
           <p className="text-gray-600 mt-1">Here's your financial overview</p>
         </div>
 
-        <Link to="/loans">
+        {/* <Link to="/loans">
           <Button className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700">
             <Plus className="w-4 h-4 mr-2" />
             Add New Loan
           </Button>
-        </Link>
+        </Link> */}
       </div>
 
       {/* Stats Cards */}
@@ -326,7 +326,7 @@ const Dashboard = () => {
       </div>
 
       {/* Alert for Overdue Payments */}
-      {stats.overduePayments > 0 && (
+      {/* {stats.overduePayments > 0 && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-6">
             <div className="flex items-center space-x-3">
@@ -349,7 +349,7 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
-      )}
+      )} */}
     </div>
   );
 };
