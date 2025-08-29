@@ -6,9 +6,9 @@ import { useAuth } from "../contexts/AuthContext";
 
 const navigation = [
 	{ name: "Dashboard", href: "/", icon: LayoutDashboard },
-	// { name: "Loans", href: "/loans", icon: HandCoins },
-	// { name: "Repayments", href: "/repayments", icon: History },
-	// { name: "EMI Calculator", href: "/calculator", icon: Calculator },
+	{ name: "Loans", href: "/loans", icon: HandCoins },
+	{ name: "Repayments", href: "/repayments", icon: History },
+	{ name: "EMI Calculator", href: "/calculator", icon: Calculator },
 ];
 
 function SidebarMenu() {

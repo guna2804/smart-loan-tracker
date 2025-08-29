@@ -82,7 +82,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.success && response.token) {
         let userData: User;
         if (response.user) {
-          userData = response.user;
+          userData = {
+            id: response.user.id,
+            email: response.user.email,
+            fullName: response.user.name
+          };
         } else {
           // Fallback: Decode token to construct user
           const decoded: DecodedToken = jwtDecode(response.token);
@@ -92,13 +96,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             fullName: decoded.name || 'User', // Use a default name
           };
         }
-        if (rememberMe) {
-          localStorage.setItem('authToken', response.token);
-          localStorage.setItem('userData', JSON.stringify(userData));
-        } else {
-          sessionStorage.setItem('authToken', response.token);
-          sessionStorage.setItem('userData', JSON.stringify(userData));
-        }
+        // Always use localStorage for persistent login
+        localStorage.setItem('authToken', response.token);
+        localStorage.setItem('userData', JSON.stringify(userData));
         setUser(userData);
         console.log('User set after login:', userData);
         setIsLoading(false);
@@ -120,9 +120,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('Signup response:', response);
       if (response.success && response.token && response.user) {
         localStorage.setItem('authToken', response.token);
-        localStorage.setItem('userData', JSON.stringify(response.user));
-        setUser(response.user);
-        console.log('User set after signup:', response.user);
+        const mappedUser = {
+          id: response.user.id,
+          email: response.user.email,
+          fullName: response.user.name
+        };
+        localStorage.setItem('userData', JSON.stringify(mappedUser));
+        setUser(mappedUser);
+        console.log('User set after signup:', mappedUser);
         setIsLoading(false);
         return true;
       }

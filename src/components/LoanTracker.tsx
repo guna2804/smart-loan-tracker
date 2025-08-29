@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { loanService, InterestType, CompoundingFrequencyType, RepaymentFrequencyType, CurrencyType } from "../services/loanService";
 import { Card, CardContent} from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -31,50 +32,48 @@ import {
 
 interface Loan {
   id: string;
-  borrowerName: string;
-  lenderName: string;
-  amount: number;
+  userId: string;
+  counterpartyName: string;
+  role: string; // "Lender" or "Borrower"
+  principal: number;
   interestRate: number;
-  interestType: "flat" | "compound";
+  interestType: number; // enum: 0 (Flat), 1 (Compound)
+  compoundingFrequency: number; // enum: 0 (None), 1 (Monthly), etc.
   startDate: string;
-  dueDate: string;
-  status: "active" | "completed" | "overdue";
-  type: "lending" | "borrowing";
+  endDate?: string;
+  repaymentFrequency: number; // enum: 0 (Monthly), etc.
+  allowOverpayment: boolean;
+  currency: number; // enum: 0 (USD), 1 (EUR), 2 (INR), etc.
+  status: number; // enum: 0 (Active), 1 (Overdue), 2 (Completed)
   notes?: string;
-  remainingAmount: number;
+  // Optionally add:
+  // user?: any;
+  // repayments?: any[];
+  // notifications?: any[];
 }
 
 const LoanTracker = () => {
-  const [loans, setLoans] = useState<Loan[]>([
-    {
-      id: "1",
-      borrowerName: "John Doe",
-      lenderName: "You",
-      amount: 5000,
-      interestRate: 5,
-      interestType: "compound",
-      startDate: "2025-01-15",
-      dueDate: "2025-08-15",
-      status: "active",
-      type: "lending",
-      notes: "Personal loan for emergency expenses",
-      remainingAmount: 4200,
-    },
-    {
-      id: "2",
-      borrowerName: "You",
-      lenderName: "Jane Smith",
-      amount: 2500,
-      interestRate: 3,
-      interestType: "flat",
-      startDate: "2025-02-01",
-      dueDate: "2025-08-01",
-      status: "active",
-      type: "borrowing",
-      notes: "Business investment loan",
-      remainingAmount: 2100,
-    },
-  ]);
+  const [loans, setLoans] = useState<Loan[]>([]);
+  // Removed unused loading state
+
+  useEffect(() => {
+    const fetchLoans = async () => {
+      try {
+        const data = await loanService.getLoans();
+        console.log('Fetched loans from backend:', data);
+        // Map backend role to UI type for filtering
+        const mappedLoans = (data.loans ?? []).map((loan: Loan) => ({
+          ...loan,
+          type: loan.role === "Lender" ? "lending" : "borrowing"
+        }));
+        console.log('Mapped loans for UI:', mappedLoans);
+        setLoans(mappedLoans);
+      } catch (err) {
+        console.error('Error fetching loans:', err);
+      }
+    };
+    fetchLoans();
+  }, []);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("lending");
@@ -85,53 +84,64 @@ const LoanTracker = () => {
     lenderName: "",
     amount: "",
     interestRate: "",
-    interestType: "flat" as "flat" | "compound",
+    interestType: InterestType.Flat,
+    compoundingFrequency: CompoundingFrequencyType.None,
     startDate: "",
     dueDate: "",
     type: "lending" as "lending" | "borrowing",
+    repaymentFrequency: RepaymentFrequencyType.Monthly,
+    allowOverpayment: false,
+    currency: CurrencyType.INR,
     notes: "",
   });
 
   const calculateTotalAmount = (loan: Loan) => {
-    const principal = loan.amount;
+    const principal = loan.principal;
     const rate = loan.interestRate / 100;
     const timePeriod =
-      (new Date(loan.dueDate).getTime() - new Date(loan.startDate).getTime()) /
+      ((loan.endDate ? new Date(loan.endDate).getTime() : new Date().getTime()) - new Date(loan.startDate).getTime()) /
       (1000 * 60 * 60 * 24 * 365);
 
-    if (loan.interestType === "compound") {
+    if (loan.interestType === InterestType.Compound) {
       return principal * Math.pow(1 + rate, timePeriod);
     } else {
       return principal * (1 + rate * timePeriod);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newLoan: Loan = {
-      id: editingLoan?.id || Date.now().toString(),
-      borrowerName: formData.type === "lending" ? formData.borrowerName : "You",
-      lenderName: formData.type === "lending" ? "You" : formData.lenderName,
-      amount: parseFloat(formData.amount),
+    const payload = {
+      counterpartyName: formData.type === "lending" ? formData.borrowerName : formData.lenderName,
+      role: formData.type === "lending" ? "Lender" : "Borrower",
+      principal: parseFloat(formData.amount),
       interestRate: parseFloat(formData.interestRate),
       interestType: formData.interestType,
+      compoundingFrequency: formData.compoundingFrequency,
       startDate: formData.startDate,
-      dueDate: formData.dueDate,
-      status: "active",
-      type: formData.type,
+      endDate: formData.dueDate,
+      repaymentFrequency: formData.repaymentFrequency,
+      allowOverpayment: formData.allowOverpayment,
+      currency: formData.currency,
       notes: formData.notes,
-      remainingAmount: parseFloat(formData.amount),
     };
-
-    if (editingLoan) {
-      setLoans(
-        loans.map((loan) => (loan.id === editingLoan.id ? newLoan : loan))
-      );
-    } else {
-      setLoans([...loans, newLoan]);
+    try {
+      if (editingLoan) {
+        await loanService.updateLoan(editingLoan.id, payload);
+      } else {
+        await loanService.createLoan(payload);
+      }
+      // Refresh loan list
+      const data = await loanService.getLoans();
+      const mappedLoans = (data.loans ?? []).map((loan: Loan) => ({
+        ...loan,
+        type: loan.role === "Lender" ? "lending" : "borrowing"
+      }));
+      setLoans(mappedLoans);
+      resetForm();
+    } catch {
+      // Optionally handle error
     }
-
-    resetForm();
   };
 
   const resetForm = () => {
@@ -140,10 +150,14 @@ const LoanTracker = () => {
       lenderName: "",
       amount: "",
       interestRate: "",
-      interestType: "flat",
+      interestType: InterestType.Flat,
+      compoundingFrequency: CompoundingFrequencyType.None,
       startDate: "",
       dueDate: "",
       type: "lending",
+      repaymentFrequency: RepaymentFrequencyType.Monthly,
+      allowOverpayment: false,
+      currency: CurrencyType.INR,
       notes: "",
     });
     setEditingLoan(null);
@@ -151,26 +165,52 @@ const LoanTracker = () => {
   };
 
   const handleEdit = (loan: Loan) => {
+    // Format dates to yyyy-MM-dd for input type="date"
+    const formatDate = (dateStr?: string) => {
+      if (!dateStr) return "";
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return "";
+      return d.toISOString().slice(0, 10);
+    };
     setFormData({
-      borrowerName: loan.type === "lending" ? loan.borrowerName : "",
-      lenderName: loan.type === "borrowing" ? loan.lenderName : "",
-      amount: loan.amount.toString(),
+      borrowerName: loan.role === "Lender" ? loan.counterpartyName : "",
+      lenderName: loan.role === "Borrower" ? loan.counterpartyName : "",
+      amount: loan.principal.toString(),
       interestRate: loan.interestRate.toString(),
       interestType: loan.interestType,
-      startDate: loan.startDate,
-      dueDate: loan.dueDate,
-      type: loan.type,
+      compoundingFrequency: loan.compoundingFrequency,
+      startDate: formatDate(loan.startDate),
+      dueDate: formatDate(loan.endDate),
+      type: loan.role === "Lender" ? "lending" : "borrowing",
+      repaymentFrequency: loan.repaymentFrequency,
+      allowOverpayment: loan.allowOverpayment,
+      currency: loan.currency,
       notes: loan.notes || "",
     });
     setEditingLoan(loan);
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setLoans(loans.filter((loan) => loan.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      await loanService.deleteLoan(id);
+      const data = await loanService.getLoans();
+      console.log('Fetched loans after delete:', data);
+      const mappedLoans = (data.loans ?? []).map((loan: Loan) => ({
+        ...loan,
+        type: loan.role === "Lender" ? "lending" : "borrowing"
+      }));
+      console.log('Mapped loans for UI after delete:', mappedLoans);
+      setLoans(mappedLoans);
+    } catch (err) {
+      console.error('Error deleting loan:', err);
+    }
   };
 
-  const filteredLoans = loans.filter((loan) => loan.type === activeTab);
+  const filteredLoans = loans.filter((loan) =>
+    (activeTab === "lending" && loan.role === "Lender") ||
+    (activeTab === "borrowing" && loan.role === "Borrower")
+  );
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-8 max-w-full">
@@ -274,9 +314,9 @@ const LoanTracker = () => {
                 <div className="space-y-2">
                   <Label htmlFor="interestType">Interest Type</Label>
                   <Select
-                    value={formData.interestType}
+                    value={formData.interestType === InterestType.Compound ? "compound" : "flat"}
                     onValueChange={(value: "flat" | "compound") =>
-                      setFormData({ ...formData, interestType: value })
+                      setFormData({ ...formData, interestType: value === "compound" ? InterestType.Compound : InterestType.Flat })
                     }
                   >
                     <SelectTrigger>
@@ -349,11 +389,11 @@ const LoanTracker = () => {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="lending" className="flex items-center">
             <TrendingUp className="w-4 h-4 mr-2" />
-            Lending ({loans.filter((l) => l.type === "lending").length})
+            Lending ({loans.filter((l) => l.role === "Lender").length})
           </TabsTrigger>
           <TabsTrigger value="borrowing" className="flex items-center">
             <TrendingDown className="w-4 h-4 mr-2" />
-            Borrowing ({loans.filter((l) => l.type === "borrowing").length})
+            Borrowing ({loans.filter((l) => l.role === "Borrower").length})
           </TabsTrigger>
         </TabsList>
 
@@ -399,11 +439,11 @@ const LoanTracker = () => {
                 >
                   {/* Desktop Layout - Horizontal (md and up) */}
                   <div className="hidden md:flex items-center justify-between">
-                    {/* Borrower */}
+                    {/* Counterparty */}
                     <div className="flex items-center space-x-4">
                       <div
                         className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                          loan.type === "lending"
+                          loan.role === "Lender"
                             ? "bg-green-100 text-green-600"
                             : "bg-blue-100 text-blue-600"
                         }`}
@@ -412,12 +452,10 @@ const LoanTracker = () => {
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">
-                          {loan.type === "lending"
-                            ? loan.borrowerName
-                            : loan.lenderName}
+                          {loan.counterpartyName}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          {loan.type === "lending" ? "Borrower" : "Lender"}
+                          {loan.role}
                         </p>
                       </div>
                     </div>
@@ -427,7 +465,7 @@ const LoanTracker = () => {
                       <div className="flex items-center justify-end space-x-2">
                         Principal:
                         <span className="font-bold text-lg">
-                          ${loan.amount.toLocaleString()}
+                          ${loan.principal.toLocaleString()}
                         </span>
                       </div>
                       <div className="text-sm text-gray-500">
@@ -438,15 +476,13 @@ const LoanTracker = () => {
                     {/* Status */}
                     <div className="text-center">
                       <Badge
-                        variant={
-                          loan.status === "overdue" ? "destructive" : "default"
-                        }
+                        variant={loan.status === 1 ? "destructive" : "default"}
                         className="capitalize"
                       >
-                        {loan.status}
+                        {loan.status === 0 ? "active" : loan.status === 1 ? "overdue" : "completed"}
                       </Badge>
                       <div className="text-xs text-gray-500 mt-1">
-                        {loan.interestRate}% {loan.interestType}
+                        {loan.interestRate}% {loan.interestType === InterestType.Compound ? "compound" : "flat"}
                       </div>
                     </div>
 
@@ -472,12 +508,12 @@ const LoanTracker = () => {
 
                   {/* Mobile Layout - Stacked (below md) */}
                   <div className="md:hidden space-y-3">
-                    {/* Top Row: Borrower Info and Status */}
+                    {/* Top Row: Counterparty Info and Status */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div
                           className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            loan.type === "lending"
+                            loan.role === "Lender"
                               ? "bg-green-100 text-green-600"
                               : "bg-blue-100 text-blue-600"
                           }`}
@@ -486,23 +522,19 @@ const LoanTracker = () => {
                         </div>
                         <div className="min-w-0 flex-1">
                           <h3 className="font-semibold text-gray-900 text-sm truncate">
-                            {loan.type === "lending"
-                              ? loan.borrowerName
-                              : loan.lenderName}
+                            {loan.counterpartyName}
                           </h3>
                           <p className="text-xs text-gray-500">
-                            {loan.type === "lending" ? "Borrower" : "Lender"}
+                            {loan.role}
                           </p>
                         </div>
                       </div>
 
                       <Badge
-                        variant={
-                          loan.status === "overdue" ? "destructive" : "default"
-                        }
+                        variant={loan.status === 1 ? "destructive" : "default"}
                         className="capitalize text-xs"
                       >
-                        {loan.status}
+                        {loan.status === 0 ? "active" : loan.status === 1 ? "overdue" : "completed"}
                       </Badge>
                     </div>
 
@@ -513,7 +545,7 @@ const LoanTracker = () => {
                           Principal:
                         </span>
                         <span className="font-bold text-lg text-gray-900">
-                          ${loan.amount.toLocaleString()}
+                          ${loan.principal.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
@@ -524,7 +556,7 @@ const LoanTracker = () => {
                       </div>
                       <div className="text-center pt-1">
                         <span className="text-xs text-gray-500">
-                          {loan.interestRate}% {loan.interestType}
+                          {loan.interestRate}% {loan.interestType === InterestType.Compound ? "compound" : "flat"}
                         </span>
                       </div>
                     </div>
