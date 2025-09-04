@@ -134,6 +134,44 @@ export const ResultsDisplay = ({
                 </div>
               </div>
             </TabsContent>
+
+            <TabsContent value="detailed" className="space-y-4">
+              <div className="max-h-[500px] overflow-auto border border-gray-300 rounded-lg">
+                <table className="w-full border-collapse">
+                  <thead className="sticky top-0 bg-gray-50">
+                    <tr>
+                      <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Month</th>
+                      <th className="border border-gray-300 px-4 py-3 text-right font-semibold">EMI</th>
+                      <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Principal</th>
+                      <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Interest</th>
+                      <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.monthlyBreakdown.map((row) => (
+                      <tr key={row.month} className="hover:bg-gray-50">
+                        <td className="border border-gray-300 px-4 py-2">{row.month}</td>
+                        <td className="border border-gray-300 px-4 py-2 text-right">
+                          ${row.emi.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 text-right">
+                          ${row.principal.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 text-right">
+                          ${row.interest.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 text-right">
+                          ${row.balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="text-sm text-gray-600 text-center">
+                Showing {result.monthlyBreakdown.length} monthly payments
+              </div>
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>

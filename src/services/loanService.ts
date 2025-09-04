@@ -1,5 +1,7 @@
 // Loan Service for MoneyBoard API
 
+import type { OutstandingLoan } from '../types/loan';
+
 const API_BASE = "http://localhost:5172/api/Loan";
 
 export enum InterestType {
@@ -7,12 +9,7 @@ export enum InterestType {
   Compound = 1,
 }
 
-export enum CompoundingFrequencyType {
-  None = 0,
-  Monthly = 1,
-  Quarterly = 2,
-  Yearly = 3,
-}
+
 
 export enum RepaymentFrequencyType {
   Monthly = 0,
@@ -33,13 +30,38 @@ export interface CreateLoanDto {
   principal: number;
   interestRate: number;
   interestType: InterestType;
-  compoundingFrequency: CompoundingFrequencyType;
   startDate: string;
   endDate?: string;
   repaymentFrequency: RepaymentFrequencyType;
   allowOverpayment: boolean;
   currency: CurrencyType;
   notes?: string;
+}
+
+export interface PagedLoanResponse {
+  loans: Loan[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface Loan {
+  id: string;
+  userId: string;
+  counterpartyName: string;
+  role: string;
+  principal: number;
+  interestRate: number;
+  interestType: InterestType;
+  startDate: string;
+  endDate?: string;
+  repaymentFrequency: RepaymentFrequencyType;
+  allowOverpayment: boolean;
+  currency: CurrencyType;
+  status: number;
+  notes?: string;
+  hasRepaymentStarted: boolean;
 }
 
 export const loanService = {
@@ -127,6 +149,25 @@ export const loanService = {
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error("Failed to amend loan");
+    return await res.json();
+  },
+
+  async getOutstandingLoans(
+    params: {
+      page?: number;
+      pageSize?: number;
+    } = {}
+  ): Promise<{ loans: OutstandingLoan[]; totalCount: number; page: number; pageSize: number; totalPages: number }> {
+    const url = new URL(`${API_BASE}/with-outstanding`, window.location.origin);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) url.searchParams.append(key, String(value));
+    });
+    const token =
+      localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+    const res = await fetch(url.toString(), {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error("Failed to fetch outstanding loans");
     return await res.json();
   },
 };

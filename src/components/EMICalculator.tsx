@@ -44,15 +44,17 @@ export const EMICalculator = () => {
           onCustomCalculate={inputs.calculationType !== 'emi' ? calculate : undefined}
         />
         {result && (
-          <div className="md:col-span-2 lg:col-span-2">
-            <ResultsDisplay
-              result={result}
-              loanAmount={inputs.loanAmount}
-              interestRate={inputs.interestRate} 
-              loanTenure={inputs.loanTenure}
-              tenureType={inputs.tenureType}
-              onExport={exportData}
-            />
+          <div className="md:col-span-2 lg:col-span-2 max-h-[800px] overflow-hidden">
+            <div className="h-full overflow-y-auto">
+              <ResultsDisplay
+                result={result}
+                loanAmount={inputs.loanAmount}
+                interestRate={inputs.interestRate}
+                loanTenure={inputs.loanTenure}
+                tenureType={inputs.tenureType}
+                onExport={exportData}
+              />
+            </div>
           </div>
         )}
       </div>

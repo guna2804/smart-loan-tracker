@@ -17,9 +17,12 @@ export const calculateTotalLoanAmount = (loan: Loan): number => {
   const principal = loan.amount;
   const rate = loan.interestRate / 100;
   const timeInYears = (new Date(loan.dueDate).getTime() - new Date(loan.startDate).getTime()) / (1000 * 60 * 60 * 24 * 365);
-  
+
   if (loan.interestType === 'compound') {
-    return principal * Math.pow(1 + rate, timeInYears);
+    // Assume monthly compounding
+    const monthlyRate = rate / 12;
+    const months = timeInYears * 12;
+    return principal * Math.pow(1 + monthlyRate, months);
   }
   return principal * (1 + rate * timeInYears);
 };
@@ -68,3 +71,23 @@ export const getDefaultLoan = (type: 'lending' | 'borrowing'): Omit<Loan, 'id' |
   notes: '',
   remainingAmount: 0
 });
+
+// Currency utility functions
+export enum CurrencyType {
+  USD = 0,
+  EUR = 1,
+  INR = 2,
+}
+
+export const getCurrencySymbol = (currency: CurrencyType): string => {
+  switch (currency) {
+    case CurrencyType.USD:
+      return "$";
+    case CurrencyType.EUR:
+      return "€";
+    case CurrencyType.INR:
+      return "₹";
+    default:
+      return "$"; // Default to USD
+  }
+};

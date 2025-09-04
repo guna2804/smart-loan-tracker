@@ -9,9 +9,10 @@ export interface User {
 }
 
 interface DecodedToken {
-  sub: string; 
-  email: string; 
-  [key: string]: any; 
+  sub: string;
+  email: string;
+  name?: string;
+  [key: string]: string | undefined;
 }
 
 interface AuthContextType {
@@ -24,6 +25,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -61,7 +63,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const fallbackUser: User = {
           id: decoded.sub || '',
           email: decoded.email || '',
-          fullName: decoded.name || 'User', // Use a fallback name if not available
+          fullName: decoded.name || 'User', 
         };
         setUser(fallbackUser);
         localStorage.setItem('userData', JSON.stringify(fallbackUser));
