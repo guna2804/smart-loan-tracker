@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   calculateEMI,
   calculateMaxLoanAmount,
@@ -9,6 +9,7 @@ import {
 
 export type CalculationType = 'emi' | 'loan-amount' | 'tenure';
 export type TenureType = 'months' | 'years';
+export type InterestType = 'flat' | 'compound';
 
 interface CalculatorInputs {
   loanAmount: string;
@@ -17,6 +18,7 @@ interface CalculatorInputs {
   tenureType: TenureType;
   calculationType: CalculationType;
   targetEMI: string;
+  interestType: InterestType;
 }
 
 export const useEMICalculator = () => {
@@ -26,7 +28,8 @@ export const useEMICalculator = () => {
     loanTenure: '12',
     tenureType: 'months',
     calculationType: 'emi',
-    targetEMI: ''
+    targetEMI: '',
+    interestType: 'compound'
   });
   
   const [result, setResult] = useState<EMIResult|null>(null);
@@ -37,28 +40,34 @@ export const useEMICalculator = () => {
   }, []);
 
   const calculate = useCallback(() => {
-    const principal = parseFloat(inputs.loanAmount) || 0;
-    const rate = parseFloat(inputs.interestRate) || 0;
-    const tenure = inputs.tenureType === 'years' 
-      ? (parseFloat(inputs.loanTenure) || 0) * 12 
-      : parseFloat(inputs.loanTenure) || 0;
+    try {
+      const principal = parseFloat(inputs.loanAmount) || 0;
+      const rate = parseFloat(inputs.interestRate) || 0;
+      const tenure = inputs.tenureType === 'years'
+        ? (parseFloat(inputs.loanTenure) || 0) * 12
+        : parseFloat(inputs.loanTenure) || 0;
 
-    if (principal > 0 && rate >= 0 && tenure > 0) {
-      if (inputs.calculationType === 'emi') {
-        setResult(calculateEMI(principal, rate, tenure));
+      if (principal > 0 && rate >= 0 && tenure > 0) {
+        if (inputs.calculationType === 'emi') {
+          setResult(calculateEMI(principal, rate, tenure, inputs.interestType));
+        }
+        else if (inputs.calculationType === 'loan-amount' && inputs.targetEMI) {
+          const emi = parseFloat(inputs.targetEMI);
+          const maxLoan = calculateMaxLoanAmount(emi, rate, tenure, inputs.interestType);
+          updateInputs({ loanAmount: maxLoan.toFixed(0) });
+          setResult(calculateEMI(maxLoan, rate, tenure, inputs.interestType));
+        }
+        else if (inputs.calculationType === 'tenure' && inputs.targetEMI) {
+          const emi = parseFloat(inputs.targetEMI);
+          const requiredTenure = calculateTenure(principal, emi, rate, inputs.interestType);
+          updateInputs({ loanTenure: Math.ceil(requiredTenure).toString() });
+          setResult(calculateEMI(principal, rate, Math.ceil(requiredTenure), inputs.interestType));
+        }
       }
-      else if (inputs.calculationType === 'loan-amount' && inputs.targetEMI) {
-        const emi = parseFloat(inputs.targetEMI);
-        const maxLoan = calculateMaxLoanAmount(emi, rate, tenure);
-        updateInputs({ loanAmount: maxLoan.toFixed(0) });
-        setResult(calculateEMI(maxLoan, rate, tenure));
-      }
-      else if (inputs.calculationType === 'tenure' && inputs.targetEMI) {
-        const emi = parseFloat(inputs.targetEMI);
-        const requiredTenure = calculateTenure(principal, emi, rate);
-        updateInputs({ loanTenure: Math.ceil(requiredTenure).toString() });
-        setResult(calculateEMI(principal, rate, Math.ceil(requiredTenure)));
-      }
+    } catch (error) {
+      console.error('EMI calculation error:', error);
+      // Could add toast notification here if needed
+      setResult(null);
     }
   }, [inputs, updateInputs]);
 
@@ -69,7 +78,8 @@ export const useEMICalculator = () => {
       loanTenure: '12',
       tenureType: 'months',
       calculationType: 'emi',
-      targetEMI: ''
+      targetEMI: '',
+      interestType: 'compound'
     });
     setResult(null);
   }, [updateInputs]);
@@ -86,19 +96,7 @@ export const useEMICalculator = () => {
     a.click();
   }, [result]);
 
-  // Auto-calculate when inputs change for EMI mode
-  useEffect(() => {
-    if (inputs.calculationType === 'emi') {
-      calculate();
-    }
-  }, [
-    inputs.loanAmount,
-    inputs.interestRate, 
-    inputs.loanTenure,
-    inputs.tenureType,
-    inputs.calculationType,
-    calculate
-  ]);
+  // Note: EMI calculation is now manual via button click for better UX
 
   return { 
     inputs,

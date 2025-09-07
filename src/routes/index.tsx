@@ -6,7 +6,7 @@ import Layout from "./Layout";
 
 const Dashboard = lazy(() => import("../components/Dashboard"));
 const LoanTracker = lazy(() => import("../components/LoanTracker"));
-const RepaymentLog = lazy(() => import("../components/RepaymentLog"));
+const RepaymentLog = lazy(() => import("../components/repayments/RepaymentLog"));
 const EMICalculator = lazy(() => import("../components/EMICalculator"));
 const Settings = lazy(() => import("../components/Settings"));
 const LoginPage = lazy(() => import("../components/auth/LoginPage"));

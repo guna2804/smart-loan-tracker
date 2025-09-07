@@ -1,7 +1,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Progress } from '../ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Calendar, DollarSign, TrendingUp, PieChart } from 'lucide-react';
+import { Calendar, IndianRupee, TrendingUp, PieChart } from 'lucide-react';
 import type { EMIResult } from '../../utils/calculationUtils';
 
 interface ResultsDisplayProps {
@@ -35,7 +35,7 @@ export const ResultsDisplay = ({
               <div>
                 <p className="text-sm text-blue-800">Monthly EMI</p>
                 <p className="text-2xl font-bold text-blue-900">
-                  ${result.emi.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  ₹{result.emi.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </p>
               </div>
               <Calendar className="w-8 h-8 text-blue-600" />
@@ -49,10 +49,10 @@ export const ResultsDisplay = ({
               <div>
                 <p className="text-sm text-green-800">Total Amount</p>
                 <p className="text-2xl font-bold text-green-900">
-                  ${result.totalAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  ₹{result.totalAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </p>
               </div>
-              <DollarSign className="w-8 h-8 text-green-600" />
+              <IndianRupee className="w-8 h-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
@@ -63,7 +63,7 @@ export const ResultsDisplay = ({
               <div>
                 <p className="text-sm text-red-800">Total Interest</p>
                 <p className="text-2xl font-bold text-red-900">
-                  ${result.totalInterest.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  ₹{result.totalInterest.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-red-600" />
@@ -85,14 +85,14 @@ export const ResultsDisplay = ({
             <div>
               <div className="flex justify-between text-sm mb-2">
                 <span>Principal ({principalPercentage.toFixed(1)}%)</span>
-                <span>${(result.totalAmount - result.totalInterest).toLocaleString()}</span>
+                <span>₹{(result.totalAmount - result.totalInterest).toLocaleString()}</span>
               </div>
               <Progress value={principalPercentage} className="h-3" />
             </div>
             <div>
               <div className="flex justify-between text-sm mb-2">
                 <span>Interest ({interestPercentage.toFixed(1)}%)</span>
-                <span>${result.totalInterest.toLocaleString()}</span>
+                <span>₹{result.totalInterest.toLocaleString()}</span>
               </div>
               <Progress value={interestPercentage} className="h-3 bg-red-100" />
             </div>
@@ -116,7 +116,7 @@ export const ResultsDisplay = ({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600">Loan Amount</p>
-                  <p className="text-lg font-semibold">${parseFloat(loanAmount).toLocaleString()}</p>
+                  <p className="text-lg font-semibold">₹{parseFloat(loanAmount).toLocaleString()}</p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600">Interest Rate</p>
@@ -152,16 +152,16 @@ export const ResultsDisplay = ({
                       <tr key={row.month} className="hover:bg-gray-50">
                         <td className="border border-gray-300 px-4 py-2">{row.month}</td>
                         <td className="border border-gray-300 px-4 py-2 text-right">
-                          ${row.emi.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                          ₹{row.emi.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </td>
                         <td className="border border-gray-300 px-4 py-2 text-right">
-                          ${row.principal.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                          ₹{row.principal.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </td>
                         <td className="border border-gray-300 px-4 py-2 text-right">
-                          ${row.interest.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                          ₹{row.interest.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </td>
                         <td className="border border-gray-300 px-4 py-2 text-right">
-                          ${row.balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                          ₹{row.balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </td>
                       </tr>
                     ))}

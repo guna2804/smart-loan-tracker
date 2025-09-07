@@ -82,12 +82,12 @@ export enum CurrencyType {
 export const getCurrencySymbol = (currency: CurrencyType): string => {
   switch (currency) {
     case CurrencyType.USD:
-      return "$";
+      return "₹";
     case CurrencyType.EUR:
       return "€";
     case CurrencyType.INR:
       return "₹";
     default:
-      return "$"; // Default to USD
+      return "₹"; // Default to INR
   }
 };

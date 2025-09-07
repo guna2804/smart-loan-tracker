@@ -29,3 +29,9 @@ export interface PagedRepaymentResponse {
   pageSize: number;
   totalPages: number;
 }
+
+export interface RepaymentSummary {
+  totalPayments: number;
+  totalInterest: number;
+  totalPrincipal: number;
+}

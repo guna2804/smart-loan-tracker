@@ -33,11 +33,10 @@ export interface OutstandingLoan {
   allowOverpayment: boolean;
   nextDueDate: string;
   emiAmount: number;
-  userName: string;
+  borrowerName: string;
+  lenderName: string | null;
   role: string;
   // Computed fields for component use
   id?: string;
-  borrowerName?: string;
-  lenderName?: string;
   loanType?: 'lending' | 'borrowing';
 }

@@ -43,17 +43,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const authTokenKey = import.meta.env.VITE_AUTH_TOKEN_KEY || 'authToken';
+    let token = localStorage.getItem(authTokenKey);
+
+    // Migration: If new key is empty but old 'authToken' exists, migrate it
+    if (!token && authTokenKey !== 'authToken') {
+      const oldToken = localStorage.getItem('authToken');
+      if (oldToken) {
+        localStorage.setItem(authTokenKey, oldToken);
+        localStorage.removeItem('authToken'); // Clean up old key
+        token = oldToken;
+      }
+    }
+
     const userData = localStorage.getItem('userData');
-    console.log('AuthProvider useEffect: token=', token, 'userData=', userData);
     if (token && userData) {
       try {
         const parsedUser = JSON.parse(userData);
         setUser(parsedUser);
-        console.log('User set from localStorage:', parsedUser);
-      } catch (error) {
-        console.error('Error parsing userData:', error);
-        localStorage.removeItem('authToken');
+      } catch {
+        localStorage.removeItem(authTokenKey);
         localStorage.removeItem('userData');
       }
     } else if (token) {
@@ -63,24 +72,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const fallbackUser: User = {
           id: decoded.sub || '',
           email: decoded.email || '',
-          fullName: decoded.name || 'User', 
+          fullName: decoded.name || 'User',
         };
         setUser(fallbackUser);
         localStorage.setItem('userData', JSON.stringify(fallbackUser));
-        console.log('User set from token:', fallbackUser);
-      } catch (error) {
-        console.error('Error decoding token:', error);
-        localStorage.removeItem('authToken');
+      } catch {
+        localStorage.removeItem(authTokenKey);
       }
     }
     setIsLoading(false);
+
+    // Listen for unauthorized events from httpClient
+    const handleUnauthorized = () => {
+      logout();
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
   }, []);
 
   const login = async (email: string, password: string, rememberMe = false): Promise<boolean> => {
     setIsLoading(true);
     try {
       const response = await authService.login({ email, password, rememberMe });
-      console.log('Login response:', response);
       if (response.success && response.token) {
         let userData: User;
         if (response.user) {
@@ -99,17 +116,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           };
         }
         // Always use localStorage for persistent login
-        localStorage.setItem('authToken', response.token);
+        const authTokenKey = import.meta.env.VITE_AUTH_TOKEN_KEY || 'authToken';
+        localStorage.setItem(authTokenKey, response.token);
         localStorage.setItem('userData', JSON.stringify(userData));
         setUser(userData);
-        console.log('User set after login:', userData);
         setIsLoading(false);
         return true;
       }
       setIsLoading(false);
       return false;
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch {
       setIsLoading(false);
       return false;
     }
@@ -119,7 +135,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     try {
       const response = await authService.signup({ fullName, email, password, confirmPassword: password });
-      console.log('Signup response:', response);
       if (response.success && response.token && response.user) {
         localStorage.setItem('authToken', response.token);
         const mappedUser = {
@@ -129,7 +144,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
         localStorage.setItem('userData', JSON.stringify(mappedUser));
         setUser(mappedUser);
-        console.log('User set after signup:', mappedUser);
         setIsLoading(false);
         return true;
       }
@@ -143,12 +157,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('authToken');
+    const authTokenKey = import.meta.env.VITE_AUTH_TOKEN_KEY || 'authToken';
+    localStorage.removeItem(authTokenKey);
     localStorage.removeItem('userData');
-    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem(authTokenKey);
     sessionStorage.removeItem('userData');
     setUser(null);
-    console.log('User logged out, user set to null');
   };
 
   const value = {

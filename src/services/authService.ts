@@ -1,3 +1,10 @@
+// Auth Service for MoneyBoard API
+// All API calls migrated to use Axios for consistency with other services
+// Uses httpClient instance with interceptors for auth token management
+
+import type { AxiosError } from 'axios';
+import httpClient, { setToken, clearToken } from './httpClient';
+
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -22,67 +29,74 @@ export interface AuthResponse {
   token?: string;
 }
 
-const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/auth`;
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${API_BASE}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: credentials.email,
-          password: credentials.password
-        })
+      // Use httpClient for auth endpoints (interceptors skip token addition for /auth/)
+      const response = await httpClient.post('/auth/login', {
+        email: credentials.email,
+        password: credentials.password
       });
 
-      if (!response.ok) {
-        return { success: false, message: "Invalid email or password" };
+      // Store token using httpClient utility
+      if (response.data.token) {
+        setToken(response.data.token, credentials.rememberMe);
       }
 
-      const data = await response.json();
       return {
         success: true,
         message: "Login successful",
-        user: data.user,
-        token: data.token
+        user: response.data.user,
+        token: response.data.token
       };
-    } catch {
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      console.error('Login error:', axiosError.response?.data || axiosError.message);
+
+      if (axiosError.response?.status === 401) {
+        return { success: false, message: "Invalid email or password" };
+      }
+
       return { success: false, message: "Login failed. Please try again." };
     }
   },
 
   async signup(data: SignupData): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${API_BASE}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-          name: data.fullName   // ✅ matches your backend RegisterDto
-        })
+      // Use httpClient for auth endpoints (interceptors skip token addition for /auth/)
+      const response = await httpClient.post('/auth/register', {
+        email: data.email,
+        password: data.password,
+        name: data.fullName   // ✅ matches your backend RegisterDto
       });
 
-      if (!response.ok) {
-        return { success: false, message: "Registration failed. Please try again." };
+      // Store token using httpClient utility
+      if (response.data.token) {
+        setToken(response.data.token, false); // Default to sessionStorage for signup
       }
 
-      const result = await response.json();
       return {
         success: true,
         message: "Account created successfully",
-        user: result.user,
-        token: result.token
+        user: response.data.user,
+        token: response.data.token
       };
-    } catch {
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      console.error('Signup error:', axiosError.response?.data || axiosError.message);
+
+      if (axiosError.response?.status === 400) {
+        return { success: false, message: "Registration failed. Please check your details and try again." };
+      }
+
       return { success: false, message: "Registration failed. Please try again." };
     }
   },
 
   async logout(): Promise<void> {
-    localStorage.removeItem(import.meta.env.VITE_AUTH_TOKEN_KEY);
-    sessionStorage.removeItem(import.meta.env.VITE_AUTH_TOKEN_KEY);
+    // Use httpClient utility to clear token
+    clearToken();
   },
 
   validateEmail(email: string): boolean {

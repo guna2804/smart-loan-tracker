@@ -126,7 +126,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-900">
-              ${stats.totalLent.toLocaleString()}
+              ₹{stats.totalLent.toLocaleString()}
             </div>
             <p className="text-xs text-green-600 mt-1">+12% from last month</p>
           </CardContent>
@@ -141,7 +141,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-900">
-              ${stats.totalBorrowed.toLocaleString()}
+              ₹{stats.totalBorrowed.toLocaleString()}
             </div>
             <p className="text-xs text-blue-600 mt-1">-5% from last month</p>
           </CardContent>
@@ -156,7 +156,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-900">
-              ${stats.interestEarned.toLocaleString()}
+              ₹{stats.interestEarned.toLocaleString()}
             </div>
             <p className="text-xs text-purple-600 mt-1">+8% from last month</p>
           </CardContent>
@@ -181,7 +181,7 @@ const Dashboard = () => {
               >
                 <div className="flex items-center space-x-3">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ₹{
                       transaction.type === "lending"
                         ? "bg-green-100 text-green-600"
                         : "bg-blue-100 text-blue-600"
@@ -204,7 +204,7 @@ const Dashboard = () => {
                 </div>
                 <div className="text-right">
                   <p className="font-semibold text-gray-900">
-                    ${transaction.amount.toLocaleString()}
+                    ₹{transaction.amount.toLocaleString()}
                   </p>
                   <Badge
                     variant={
@@ -237,7 +237,7 @@ const Dashboard = () => {
               >
                 <div className="flex items-center space-x-3">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ₹{
                       payment.type === "receive"
                         ? "bg-green-100 text-green-600"
                         : "bg-red-100 text-red-600"
@@ -252,13 +252,13 @@ const Dashboard = () => {
                 </div>
                 <div className="text-right">
                   <p
-                    className={`font-semibold ${
+                    className={`font-semibold ₹{
                       payment.type === "receive"
                         ? "text-green-600"
                         : "text-red-600"
                     }`}
                   >
-                    {payment.type === "receive" ? "+" : "-"}$
+                    {payment.type === "receive" ? "+" : "-"}₹
                     {payment.amount.toLocaleString()}
                   </p>
                 </div>
@@ -313,7 +313,7 @@ const Dashboard = () => {
                     label
                   >
                     {loanStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-₹{index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Legend verticalAlign="bottom" height={36} />

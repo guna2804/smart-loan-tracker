@@ -12,8 +12,10 @@ interface CalculatorFormProps {
   tenureType: TenureType;
   calculationType: CalculationType;
   targetEMI: string;
+  interestType: 'flat' | 'compound';
   onInputChange: (field: string, value: string) => void;
   onTypeChange: (type: CalculationType) => void;
+  onInterestTypeChange: (type: 'flat' | 'compound') => void;
   onCustomCalculate?: () => void;
 }
 
@@ -24,8 +26,10 @@ export const CalculatorForm = ({
   tenureType,
   calculationType,
   targetEMI,
+  interestType,
   onInputChange,
   onTypeChange,
+  onInterestTypeChange,
   onCustomCalculate
 }: CalculatorFormProps) => {
   return (
@@ -57,7 +61,7 @@ export const CalculatorForm = ({
         {calculationType === 'emi' && (
           <>
             <div className="space-y-2">
-              <Label>Loan Amount ($)</Label>
+              <Label>Loan Amount (₹)</Label>
               <Input
                 type="number"
                 value={loanAmount}
@@ -70,7 +74,7 @@ export const CalculatorForm = ({
 
         {calculationType !== 'emi' && (
           <div className="space-y-2">
-            <Label>Target EMI ($)</Label>
+            <Label>Target EMI (₹)</Label>
             <Input
               type="number"
               value={targetEMI}
@@ -80,9 +84,9 @@ export const CalculatorForm = ({
           </div>
         )}
 
-        {calculationType !== 'loan-amount' && (
+        {calculationType === 'tenure' && (
           <div className="space-y-2">
-            <Label>Loan Amount ($)</Label>
+            <Label>Loan Amount (₹)</Label>
             <Input
               type="number"
               value={loanAmount}
@@ -101,6 +105,19 @@ export const CalculatorForm = ({
             onChange={(e) => onInputChange('interestRate', e.target.value)}
             placeholder="8.5"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Interest Type</Label>
+          <Select value={interestType} onValueChange={(value: 'flat' | 'compound') => onInterestTypeChange(value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="compound">Compound Interest</SelectItem>
+              <SelectItem value="flat">Flat Interest</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {calculationType !== 'tenure' && (
@@ -130,11 +147,11 @@ export const CalculatorForm = ({
           </div>
         )}
 
-        {onCustomCalculate && calculationType !== 'emi' && (
-          <button 
+        {onCustomCalculate && (
+          <button
             onClick={onCustomCalculate}
             className="w-full bg-gradient-to-r from-blue-600 to-green-600 text-white py-2 px-4 rounded-md hover:from-blue-700 hover:to-green-700 disabled:opacity-50"
-            disabled={!targetEMI}
+            disabled={calculationType !== 'emi' && !targetEMI}
           >
             Calculate
           </button>

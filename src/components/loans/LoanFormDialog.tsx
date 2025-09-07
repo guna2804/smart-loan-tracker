@@ -181,7 +181,7 @@ export const LoanFormDialog = ({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="amount">Amount ($)</Label>
+                <Label htmlFor="amount">Amount (₹)</Label>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>

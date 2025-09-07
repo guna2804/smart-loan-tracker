@@ -123,10 +123,10 @@ export default function Settings() {
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // Save preferences to localStorage
       localStorage.setItem(`userPreferences_${user?.id}`, JSON.stringify(preferences));
-      
+
       toast({
         title: "Preferences Saved",
         description: "Your preferences have been updated successfully.",
@@ -149,13 +149,13 @@ export default function Settings() {
         const mockUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
         const updatedUsers = mockUsers.filter((u: any) => u.id !== user?.id);
         localStorage.setItem('mockUsers', JSON.stringify(updatedUsers));
-        
+
         // Clean up user data
         localStorage.removeItem(`userPreferences_${user?.id}`);
-        
+
         // Logout user
         logout();
-        
+
         toast({
           title: "Account Deleted",
           description: "Your account has been permanently deleted.",
@@ -322,7 +322,7 @@ export default function Settings() {
                       <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="USD">USD (₹)</SelectItem>
                       <SelectItem value="EUR">EUR (€)</SelectItem>
                       <SelectItem value="GBP">GBP (£)</SelectItem>
                       <SelectItem value="INR">INR (₹)</SelectItem>

@@ -1,8 +1,9 @@
 // Repayment Service for MoneyBoard API
 
-import type { CreateRepaymentRequestDto, UpdateRepaymentRequestDto, Repayment, PagedRepaymentResponse } from '../types/repayment';
+import type { CreateRepaymentRequestDto, UpdateRepaymentRequestDto, Repayment, PagedRepaymentResponse, RepaymentSummary } from '../types/repayment';
+import httpClient from './httpClient';
 
-const API_BASE = "http://localhost:5172/api/loans";
+const API_BASE = '/loans';
 
 export const repaymentService = {
   async getRepayments(
@@ -17,59 +18,46 @@ export const repaymentService = {
     if (!loanId || loanId === 'undefined') {
       throw new Error('Invalid loanId provided');
     }
-    const url = new URL(`${API_BASE}/${loanId}/Repayment`, window.location.origin);
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined) url.searchParams.append(key, String(value));
+    const response = await httpClient.get(`${API_BASE}/${loanId}/Repayment`, { params });
+    return response.data;
+  },
+
+  async getRepaymentSummary(
+    loanId: string,
+    role: 'lending' | 'borrowing' | 'all' = 'all'
+  ): Promise<RepaymentSummary> {
+    if (!loanId || loanId === 'undefined') {
+      throw new Error('Invalid loanId provided');
+    }
+    const response = await httpClient.get(`${API_BASE}/${loanId}/repayment/summary`, {
+      params: { role }
     });
-    const token =
-      localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
-    const res = await fetch(url.toString(), {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    if (!res.ok) throw new Error("Failed to fetch repayments");
-    return await res.json();
+    return response.data;
   },
 
   async createRepayment(loanId: string, data: CreateRepaymentRequestDto): Promise<Repayment> {
     if (!loanId || loanId === 'undefined') {
       throw new Error('Invalid loanId provided');
     }
-    const token =
-      localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
-    const res = await fetch(`${API_BASE}/${loanId}/Repayment`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error("Failed to create repayment");
-    return await res.json();
+    try {
+      const response = await httpClient.post(`${API_BASE}/${loanId}/Repayment`, data);
+      return response.data;
+    } catch (error) {
+      // Re-throw with better error handling
+      const axiosError = error as { response?: { data?: { message?: string }; statusText?: string }; message?: string };
+      const errorMessage = axiosError.response?.data?.message || axiosError.message || "Failed to create repayment";
+      const customError = new Error(errorMessage);
+      (customError as { response?: unknown }).response = axiosError.response;
+      throw customError;
+    }
   },
 
   async updateRepayment(loanId: string, repaymentId: string, data: UpdateRepaymentRequestDto): Promise<Repayment> {
-    const token =
-      localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
-    const res = await fetch(`${API_BASE}/${loanId}/Repayment/${repaymentId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error("Failed to update repayment");
-    return await res.json();
+    const response = await httpClient.put(`${API_BASE}/${loanId}/Repayment/${repaymentId}`, data);
+    return response.data;
   },
 
   async deleteRepayment(loanId: string, repaymentId: string): Promise<void> {
-    const token =
-      localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
-    const res = await fetch(`${API_BASE}/${loanId}/Repayment/${repaymentId}`, {
-      method: "DELETE",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    if (!res.ok) throw new Error("Failed to delete repayment");
+    await httpClient.delete(`${API_BASE}/${loanId}/Repayment/${repaymentId}`);
   },
 };

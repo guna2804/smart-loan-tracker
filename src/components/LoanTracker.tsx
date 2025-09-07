@@ -37,18 +37,15 @@ const LoanTracker = () => {
           page: currentPage,
           pageSize
         });
-        console.log('Fetched loans from backend:', data);
         // Map backend role to UI type
         const mappedLoans = (data.loans ?? []).map((loan: Loan) => ({
           ...loan,
           type: loan.role === "Lender" ? "lending" : "borrowing"
         }));
-        console.log('Mapped loans for UI:', mappedLoans);
         setLoans(mappedLoans);
         setTotalCount(data.totalCount);
         setTotalPages(data.totalPages);
-      } catch (err) {
-        console.error('Error fetching loans:', err);
+      } catch (_err) {
       }
     };
     fetchLoans();
@@ -74,17 +71,14 @@ const LoanTracker = () => {
         page: currentPage,
         pageSize
       });
-      console.log('Fetched loans after delete:', data);
       const mappedLoans = (data.loans ?? []).map((loan: Loan) => ({
         ...loan,
         type: loan.role === "Lender" ? "lending" : "borrowing"
       }));
-      console.log('Mapped loans for UI after delete:', mappedLoans);
       setLoans(mappedLoans);
       setTotalCount(data.totalCount);
       setTotalPages(data.totalPages);
-    } catch (err) {
-      console.error('Error deleting loan:', err);
+    } catch (_err) {
     }
   };
 

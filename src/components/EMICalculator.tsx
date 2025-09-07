@@ -41,7 +41,8 @@ export const EMICalculator = () => {
           {...inputs}
           onInputChange={(field, value) => updateInputs({ [field]: value })}
           onTypeChange={(type) => updateInputs({ calculationType: type })}
-          onCustomCalculate={inputs.calculationType !== 'emi' ? calculate : undefined}
+          onInterestTypeChange={(type) => updateInputs({ interestType: type })}
+          onCustomCalculate={calculate}
         />
         {result && (
           <div className="md:col-span-2 lg:col-span-2 max-h-[800px] overflow-hidden">

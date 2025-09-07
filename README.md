@@ -1,6 +1,22 @@
-# React + TypeScript + Vite
+# MoneyBoard - Smart Loan Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + TypeScript application for managing loans and repayments, built with Vite.
+
+## API Architecture
+
+All API calls in this project use **Axios** for consistent HTTP request handling:
+
+- **HTTP Client**: Centralized Axios instance in `src/services/httpClient.ts`
+- **Interceptors**: Request interceptor for auth token management, response interceptor for error handling
+- **Services**: All API services (`authService`, `loanService`, `repaymentService`) use the shared httpClient
+- **Error Handling**: Consistent error handling and logging across all services
+- **Token Management**: Automatic token storage/retrieval with localStorage/sessionStorage support
+
+### Migration Notes
+- All API calls have been migrated from native `fetch` to Axios for consistency
+- Auth endpoints (`/auth/login`, `/auth/register`) skip token addition via interceptor
+- Error responses are standardized with proper logging
+- Backward compatibility maintained for existing functionality
 
 Currently, two official plugins are available:
 
