@@ -14,10 +14,10 @@ const RepaymentActions = ({ selectedLoan, onAddPayment }: RepaymentActionsProps)
         <Download className="w-4 h-4 mr-2" />
         Export
       </Button>
-      <Button onClick={onAddPayment} className="bg-gradient-to-r from-blue-600 to-green-600">
+      {/* <Button onClick={onAddPayment} className="bg-gradient-to-r from-blue-600 to-green-600">
         <Plus className="w-4 h-4 mr-2" />
         Record New Payment
-      </Button>
+      </Button> */}
     </div>
   );
 };

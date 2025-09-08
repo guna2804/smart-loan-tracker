@@ -33,8 +33,8 @@ const httpClient: AxiosInstance = axios.create({
 // Request interceptor to add auth token
 httpClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
-    // Skip adding token for auth endpoints
-    if (config.url?.includes('/auth/')) {
+    // Skip adding token for login and register endpoints
+    if (config.url?.includes('/auth/login') || config.url?.includes('/auth/register')) {
       return config;
     }
 

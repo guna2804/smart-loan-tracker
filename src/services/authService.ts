@@ -27,6 +27,9 @@ export interface AuthResponse {
     email: string;
   };
   token?: string;
+  refreshToken?: string;
+  email?: string;
+  name?: string;
 }
 
 
@@ -48,7 +51,9 @@ export const authService = {
         success: true,
         message: "Login successful",
         user: response.data.user,
-        token: response.data.token
+        token: response.data.token,
+        email: response.data.email,
+        name: response.data.name
       };
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
@@ -99,19 +104,98 @@ export const authService = {
     clearToken();
   },
 
-  validateEmail(email: string): boolean {
+  validateEmail(email: string): { isValid: boolean; message: string } {
+    if (!email) {
+      return { isValid: false, message: 'Email is required' };
+    }
+
+    if (email.length > 255) {
+      return { isValid: false, message: 'Email must not exceed 255 characters' };
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return { isValid: false, message: 'Invalid email format' };
+    }
+
+    return { isValid: true, message: '' };
+  },
+
+  validateEmailFormat(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   },
 
   validatePassword(password: string): { isValid: boolean; message: string } {
-    if (password.length < 6) {
-      return { isValid: false, message: 'Password must be at least 6 characters long' };
+    if (!password) {
+      return { isValid: false, message: 'Password is required' };
     }
+
+    if (password.length < 8) {
+      return { isValid: false, message: 'Password must be at least 8 characters long' };
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      return { isValid: false, message: 'Password must contain at least one uppercase letter' };
+    }
+
+    if (!/[a-z]/.test(password)) {
+      return { isValid: false, message: 'Password must contain at least one lowercase letter' };
+    }
+
+    if (!/\d/.test(password)) {
+      return { isValid: false, message: 'Password must contain at least one number' };
+    }
+
+    if (!/[^a-zA-Z0-9]/.test(password)) {
+      return { isValid: false, message: 'Password must contain at least one special character' };
+    }
+
     return { isValid: true, message: '' };
   },
 
   validatePasswordMatch(password: string, confirmPassword: string): boolean {
     return password === confirmPassword;
+  },
+
+  validateName(name: string): { isValid: boolean; message: string } {
+    if (!name.trim()) {
+      return { isValid: false, message: 'Name is required' };
+    }
+
+    if (name.trim().length < 2) {
+      return { isValid: false, message: 'Name must be at least 2 characters long' };
+    }
+
+    if (name.length > 100) {
+      return { isValid: false, message: 'Name must not exceed 100 characters' };
+    }
+
+    return { isValid: true, message: '' };
+  },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // Use httpClient for auth endpoints - token will be added via interceptor
+      await httpClient.post('/auth/change-password', {
+        currentPassword,
+        newPassword
+      });
+
+      return { success: true, message: "Password changed successfully" };
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      console.error('Change password error:', axiosError.response?.data || axiosError.message);
+
+      if (axiosError.response?.status === 400) {
+        return { success: false, message: "Invalid current password or new password does not meet requirements" };
+      }
+
+      if (axiosError.response?.status === 401) {
+        return { success: false, message: "Unauthorized. Please log in again." };
+      }
+
+      return { success: false, message: "Failed to change password. Please try again." };
+    }
   }
 };

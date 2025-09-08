@@ -10,8 +10,9 @@ export interface User {
 
 interface DecodedToken {
   sub: string;
-  email: string;
+  email?: string;
   name?: string;
+  userId?: string;
   [key: string]: string | undefined;
 }
 
@@ -70,9 +71,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const decoded: DecodedToken = jwtDecode(token);
         const fallbackUser: User = {
-          id: decoded.sub || '',
-          email: decoded.email || '',
-          fullName: decoded.name || 'User',
+          id: decoded.userId || decoded.sub || '',
+          email: decoded.sub || '',
+          fullName: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || decoded.name || 'User',
         };
         setUser(fallbackUser);
         localStorage.setItem('userData', JSON.stringify(fallbackUser));
@@ -99,22 +100,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authService.login({ email, password, rememberMe });
       if (response.success && response.token) {
-        let userData: User;
-        if (response.user) {
-          userData = {
-            id: response.user.id,
-            email: response.user.email,
-            fullName: response.user.name
-          };
-        } else {
-          // Fallback: Decode token to construct user
-          const decoded: DecodedToken = jwtDecode(response.token);
-          userData = {
-            id: decoded.sub || '',
-            email: decoded.email || email, // Use provided email as fallback
-            fullName: decoded.name || 'User', // Use a default name
-          };
-        }
+        const decoded: DecodedToken = jwtDecode(response.token);
+        // Use response data if available, otherwise fallback to token
+        const userData: User = {
+          id: decoded.userId || decoded.sub || '',
+          email: response.email || decoded.sub || email,
+          fullName: response.name || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || decoded.name || 'User'
+        };
         // Always use localStorage for persistent login
         const authTokenKey = import.meta.env.VITE_AUTH_TOKEN_KEY || 'authToken';
         localStorage.setItem(authTokenKey, response.token);
@@ -136,7 +128,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authService.signup({ fullName, email, password, confirmPassword: password });
       if (response.success && response.token && response.user) {
-        localStorage.setItem('authToken', response.token);
+        const authTokenKey = import.meta.env.VITE_AUTH_TOKEN_KEY || 'authToken';
+        localStorage.setItem(authTokenKey, response.token);
         const mappedUser = {
           id: response.user.id,
           email: response.user.email,

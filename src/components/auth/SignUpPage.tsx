@@ -30,28 +30,15 @@ const SignUpPage = () => {
   };
 
   const validateForm = () => {
-    if (!formData.fullName.trim()) {
-      setError('Full name is required');
+    const nameValidation = authService.validateName(formData.fullName);
+    if (!nameValidation.isValid) {
+      setError(nameValidation.message);
       return false;
     }
 
-    if (formData.fullName.trim().length < 2) {
-      setError('Full name must be at least 2 characters long');
-      return false;
-    }
-
-    if (!formData.email) {
-      setError('Email is required');
-      return false;
-    }
-
-    if (!authService.validateEmail(formData.email)) {
-      setError('Please enter a valid email address');
-      return false;
-    }
-
-    if (!formData.password) {
-      setError('Password is required');
+    const emailValidation = authService.validateEmail(formData.email);
+    if (!emailValidation.isValid) {
+      setError(emailValidation.message);
       return false;
     }
 
@@ -93,7 +80,8 @@ const SignUpPage = () => {
           description: "Welcome to MoneyBoard!",
         });
         // Store token and user data as needed
-        localStorage.setItem('authToken', response.token);
+        const authTokenKey = import.meta.env.VITE_AUTH_TOKEN_KEY || 'authToken';
+        localStorage.setItem(authTokenKey, response.token);
         localStorage.setItem('userData', JSON.stringify(response.user));
         navigate('/');
       } else {
@@ -106,7 +94,6 @@ const SignUpPage = () => {
     }
   };
 
-  const passwordValidation = authService.validatePassword(formData.password);
   const passwordsMatch = authService.validatePasswordMatch(formData.password, formData.confirmPassword);
 
   return (
@@ -182,15 +169,57 @@ const SignUpPage = () => {
                 </Button>
               </div>
               {formData.password && (
-                <div className="flex items-center space-x-2 text-sm">
-                  {passwordValidation.isValid ? (
-                    <Check className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <X className="h-4 w-4 text-red-600" />
-                  )}
-                  <span className={passwordValidation.isValid ? 'text-green-600' : 'text-red-600'}>
-                    At least 6 characters
-                  </span>
+                <div className="space-y-1 text-sm">
+                  <div className="flex items-center space-x-2">
+                    {formData.password.length >= 8 ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <X className="h-4 w-4 text-red-600" />
+                    )}
+                    <span className={formData.password.length >= 8 ? 'text-green-600' : 'text-red-600'}>
+                      At least 8 characters
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {/[A-Z]/.test(formData.password) ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <X className="h-4 w-4 text-red-600" />
+                    )}
+                    <span className={/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-red-600'}>
+                      One uppercase letter
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {/[a-z]/.test(formData.password) ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <X className="h-4 w-4 text-red-600" />
+                    )}
+                    <span className={/[a-z]/.test(formData.password) ? 'text-green-600' : 'text-red-600'}>
+                      One lowercase letter
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {/\d/.test(formData.password) ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <X className="h-4 w-4 text-red-600" />
+                    )}
+                    <span className={/\d/.test(formData.password) ? 'text-green-600' : 'text-red-600'}>
+                      One number
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {/[^a-zA-Z0-9]/.test(formData.password) ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <X className="h-4 w-4 text-red-600" />
+                    )}
+                    <span className={/[^a-zA-Z0-9]/.test(formData.password) ? 'text-green-600' : 'text-red-600'}>
+                      One special character
+                    </span>
+                  </div>
                 </div>
               )}
             </div>

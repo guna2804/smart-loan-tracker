@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '../ui/alert';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/use-toast';
+import { authService } from '../../services/authService';
 
 
 const LoginPage = () => {
@@ -23,11 +24,6 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const validateEmail = (email: string) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -37,8 +33,9 @@ const LoginPage = () => {
       return;
     }
 
-    if (!validateEmail(email)) {
-      setError('Please enter a valid email address');
+    const emailValidation = authService.validateEmail(email);
+    if (!emailValidation.isValid) {
+      setError(emailValidation.message);
       return;
     }
 
