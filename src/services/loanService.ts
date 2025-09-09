@@ -61,6 +61,7 @@ export interface Loan {
   allowOverpayment: boolean;
   currency: CurrencyType;
   status: number;
+  totalAmount: number;
   notes?: string;
   hasRepaymentStarted: boolean;
 }

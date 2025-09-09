@@ -1,6 +1,9 @@
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { Alert, AlertDescription } from "./ui/alert";
+import { Loader2 } from "lucide-react";
 
 import {
   BarChart,
@@ -11,7 +14,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 import {
@@ -24,80 +26,108 @@ import {
   IndianRupee,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useDashboard } from "../hooks/useDashboard";
 
 const Dashboard = () => {
-  // Mock data - replace with real data from your backend
-  const stats = {
-    totalLent: 15000,
-    totalBorrowed: 8500,
-    interestEarned: 1200,
-    activeLenders: 5,
-    activeBorrowers: 3,
-    overduePayments: 2,
+  const {
+    summary,
+    recentTransactions,
+    upcomingPayments,
+    monthlyRepayments,
+    loanStatusDistribution,
+    alerts,
+    loading,
+    error,
+    fetchSummary,
+    fetchRecentTransactions,
+    fetchUpcomingPayments,
+    fetchMonthlyRepayments,
+    fetchLoanStatusDistribution,
+    fetchAlerts,
+    clearError,
+  } = useDashboard();
+
+  useEffect(() => {
+    // Fetch all dashboard data on component mount
+    fetchSummary();
+    fetchRecentTransactions({ limit: 5 });
+    fetchUpcomingPayments({ limit: 5 });
+    fetchMonthlyRepayments(new Date().getFullYear()); // Pass current year
+    fetchLoanStatusDistribution();
+    fetchAlerts();
+  }, [
+    fetchSummary,
+    fetchRecentTransactions,
+    fetchUpcomingPayments,
+    fetchMonthlyRepayments,
+    fetchLoanStatusDistribution,
+    fetchAlerts,
+  ]);
+
+  // Transform data for charts with null checks
+  const monthlyRepaymentsData = monthlyRepayments && Array.isArray(monthlyRepayments)
+    ? monthlyRepayments.map(item => ({
+        month: item.month,
+        repayments: item.amount,
+      }))
+    : [];
+
+  const loanStatusData = loanStatusDistribution && Array.isArray(loanStatusDistribution)
+    ? loanStatusDistribution.map(item => ({
+        name: item.status,
+        value: item.count,
+        color: item.status === 'Active' ? '#10b981' : item.status === 'Closed' ? '#6366f1' : '#ef4444',
+      }))
+    : [];
+
+  // Calculate stats from summary
+  const stats = summary ? {
+    totalLent: summary.totalLent || 0,
+    totalBorrowed: summary.totalBorrowed || 0,
+    interestEarned: summary.interestEarned || 0,
+    activeLenders: 0,
+    activeBorrowers: 0,
+    overduePayments: alerts && Array.isArray(alerts) ? alerts.filter(alert => alert.type === 'overdue').length : 0,
+  } : {
+    totalLent: 0,
+    totalBorrowed: 0,
+    interestEarned: 0,
+    activeLenders: 0,
+    activeBorrowers: 0,
+    overduePayments: 0,
   };
+  if (loading) {
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading dashboard...</span>
+      </div>
+    );
+  }
 
-  const recentTransactions = [
-    {
-      id: 1,
-      name: "John Doe",
-      type: "lending",
-      amount: 5000,
-      dueDate: "2025-08-15",
-      status: "active",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      type: "borrowing",
-      amount: 2500,
-      dueDate: "2025-08-10",
-      status: "overdue",
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      type: "lending",
-      amount: 3000,
-      dueDate: "2025-08-20",
-      status: "active",
-    },
-  ];
+  if (error) {
+    return (
+      <div className="p-8">
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                clearError();
+                fetchSummary();
+              }}
+              className="ml-2"
+            >
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
-  const upcomingPayments = [
-    {
-      id: 1,
-      name: "Sarah Wilson",
-      amount: 1200,
-      dueDate: "2025-08-05",
-      type: "receive",
-    },
-    {
-      id: 2,
-      name: "Bank Loan",
-      amount: 850,
-      dueDate: "2025-08-07",
-      type: "pay",
-    },
-  ];
-
-  // Chart data (mock)
-  // Chart data (mock)
-  const monthlyRepaymentsData = [
-    { month: "Jan", repayments: 1200 },
-    { month: "Feb", repayments: 1500 },
-    { month: "Mar", repayments: 1100 },
-    { month: "Apr", repayments: 1800 },
-    { month: "May", repayments: 1700 },
-    { month: "Jun", repayments: 1600 },
-    { month: "Jul", repayments: 2000 },
-    { month: "Aug", repayments: 1900 },
-  ];
-
-  const loanStatusData = [
-    { name: "Active", value: 8, color: "#10b981" },
-    { name: "Closed", value: 4, color: "#6366f1" },
-    { name: "Overdue", value: 2, color: "#ef4444" },
-  ];
   return (
     <div className="p-8 space-y-8">
       {/* Header */}
@@ -174,20 +204,20 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {recentTransactions.map((transaction) => (
+            {recentTransactions && Array.isArray(recentTransactions) && recentTransactions.map((transaction) => (
               <div
                 key={transaction.id}
                 className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
               >
                 <div className="flex items-center space-x-3">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ₹{
-                      transaction.type === "lending"
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      transaction.direction === "in"
                         ? "bg-green-100 text-green-600"
                         : "bg-blue-100 text-blue-600"
                     }`}
                   >
-                    {transaction.type === "lending" ? (
+                    {transaction.direction === "in" ? (
                       <TrendingUp className="w-4 h-4" />
                     ) : (
                       <TrendingDown className="w-4 h-4" />
@@ -204,7 +234,7 @@ const Dashboard = () => {
                 </div>
                 <div className="text-right">
                   <p className="font-semibold text-gray-900">
-                    ₹{transaction.amount.toLocaleString()}
+                    ₹{(transaction.amount || 0).toLocaleString()}
                   </p>
                   <Badge
                     variant={
@@ -230,20 +260,20 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {upcomingPayments.map((payment) => (
+            {upcomingPayments && Array.isArray(upcomingPayments) && upcomingPayments.map((payment) => (
               <div
                 key={payment.id}
                 className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
               >
                 <div className="flex items-center space-x-3">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ₹{
-                      payment.type === "receive"
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      payment.direction === "in"
                         ? "bg-green-100 text-green-600"
                         : "bg-red-100 text-red-600"
                     }`}
                   >
-                    {payment.type === "receive" ? "+" : "-"}
+                    {payment.direction === "in" ? "+" : "-"}
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">{payment.name}</p>
@@ -252,14 +282,14 @@ const Dashboard = () => {
                 </div>
                 <div className="text-right">
                   <p
-                    className={`font-semibold ₹{
-                      payment.type === "receive"
+                    className={`font-semibold ${
+                      payment.direction === "in"
                         ? "text-green-600"
                         : "text-red-600"
                     }`}
                   >
-                    {payment.type === "receive" ? "+" : "-"}₹
-                    {payment.amount.toLocaleString()}
+                    {payment.direction === "in" ? "+" : "-"}₹
+                    {(payment.amount || 0).toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -312,11 +342,10 @@ const Dashboard = () => {
                     fill="#8884d8"
                     label
                   >
-                    {loanStatusData.map((entry, index) => (
-                      <Cell key={`cell-₹{index}`} fill={entry.color} />
+                    {loanStatusData.map((entry) => (
+                      <Cell key={`cell-${entry.name}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Legend verticalAlign="bottom" height={36} />
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>

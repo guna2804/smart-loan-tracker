@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { loanService } from "../services/loanService";
-import type { Loan, PagedLoanResponse } from "../types/loan";
+import { useLoans } from "../hooks/useLoans";
+import type { Loan } from "../types/loan";
 import {
   Pagination,
   PaginationContent,
@@ -18,38 +18,30 @@ import {
 } from "./loans";
 
 const LoanTracker = () => {
-  const [loans, setLoans] = useState<Loan[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("lending");
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(25);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+
+  const {
+    loans,
+    error,
+    totalCount,
+    totalPages,
+    fetchLoans,
+    deleteLoan,
+    clearError,
+  } = useLoans();
 
   useEffect(() => {
-    const fetchLoans = async () => {
-      try {
-        // Pass role parameter based on active tab and pagination
-        const role = activeTab === "lending" ? "Lender" : "Borrower";
-        const data: PagedLoanResponse = await loanService.getLoans({
-          role,
-          page: currentPage,
-          pageSize
-        });
-        // Map backend role to UI type
-        const mappedLoans = (data.loans ?? []).map((loan: Loan) => ({
-          ...loan,
-          type: loan.role === "Lender" ? "lending" : "borrowing"
-        }));
-        setLoans(mappedLoans);
-        setTotalCount(data.totalCount);
-        setTotalPages(data.totalPages);
-      } catch (_err) {
-      }
-    };
-    fetchLoans();
-  }, [activeTab, currentPage, pageSize]);
+    const role = activeTab === "lending" ? "Lender" : "Borrower";
+    fetchLoans({
+      role,
+      page: currentPage,
+      pageSize
+    });
+  }, [activeTab, currentPage, pageSize, fetchLoans]);
 
   const handleAddLoan = () => {
     setEditingLoan(null);
@@ -62,41 +54,21 @@ const LoanTracker = () => {
   };
 
   const handleDelete = async (id: string) => {
-    try {
-      await loanService.deleteLoan(id);
-      // Refetch loans with current role filter and pagination
-      const role = activeTab === "lending" ? "Lender" : "Borrower";
-      const data: PagedLoanResponse = await loanService.getLoans({
-        role,
-        page: currentPage,
-        pageSize
-      });
-      const mappedLoans = (data.loans ?? []).map((loan: Loan) => ({
-        ...loan,
-        type: loan.role === "Lender" ? "lending" : "borrowing"
-      }));
-      setLoans(mappedLoans);
-      setTotalCount(data.totalCount);
-      setTotalPages(data.totalPages);
-    } catch (_err) {
+    const success = await deleteLoan(id);
+    if (!success && error) {
+      console.error('Failed to delete loan:', error);
+      clearError();
     }
   };
 
   const handleFormSuccess = async () => {
     // Refresh loan list with current role filter and pagination
     const role = activeTab === "lending" ? "Lender" : "Borrower";
-    const data: PagedLoanResponse = await loanService.getLoans({
+    await fetchLoans({
       role,
       page: currentPage,
       pageSize
     });
-    const mappedLoans = (data.loans ?? []).map((loan: Loan) => ({
-      ...loan,
-      type: loan.role === "Lender" ? "lending" : "borrowing"
-    }));
-    setLoans(mappedLoans);
-    setTotalCount(data.totalCount);
-    setTotalPages(data.totalPages);
   };
 
   const handlePageChange = (page: number) => {

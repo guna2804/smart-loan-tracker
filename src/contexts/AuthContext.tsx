@@ -21,6 +21,9 @@ interface AuthContextType {
   login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>;
   signup: (fullName: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  forgotPassword: (email: string) => Promise<{ success: boolean; message: string }>;
+  resetPassword: (email: string, token: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
   isLoading: boolean;
 }
 
@@ -158,11 +161,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
 
+  const forgotPassword = async (email: string) => {
+    return await authService.forgotPassword(email);
+  };
+
+  const resetPassword = async (email: string, token: string, newPassword: string) => {
+    return await authService.resetPassword(email, token, newPassword);
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    return await authService.changePassword(currentPassword, newPassword);
+  };
+
   const value = {
     user,
     login,
     signup,
     logout,
+    forgotPassword,
+    resetPassword,
+    changePassword,
     isLoading
   };
 

@@ -197,5 +197,69 @@ export const authService = {
 
       return { success: false, message: "Failed to change password. Please try again." };
     }
+  },
+
+  async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+    try {
+      await httpClient.post('/auth/forgot-password', { email });
+      return { success: true, message: "Password reset instructions sent to your email" };
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      console.error('Forgot password error:', axiosError.response?.data || axiosError.message);
+
+      if (axiosError.response?.status === 400) {
+        return { success: false, message: "Invalid email address" };
+      }
+
+      return { success: false, message: "Failed to send reset instructions. Please try again." };
+    }
+  },
+
+  async resetPassword(email: string, token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      await httpClient.post('/auth/reset-password', {
+        email,
+        token,
+        newPassword
+      });
+      return { success: true, message: "Password reset successfully" };
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      console.error('Reset password error:', axiosError.response?.data || axiosError.message);
+
+      if (axiosError.response?.status === 400) {
+        return { success: false, message: "Invalid token or password does not meet requirements" };
+      }
+
+      return { success: false, message: "Failed to reset password. Please try again." };
+    }
+  },
+
+  async refreshToken(refreshToken: string): Promise<AuthResponse> {
+    try {
+      const response = await httpClient.post('/auth/refresh', { refreshToken });
+
+      // Store new token
+      if (response.data.token) {
+        setToken(response.data.token, true); // Assume remember me for refresh
+      }
+
+      return {
+        success: true,
+        message: "Token refreshed successfully",
+        token: response.data.token,
+        refreshToken: response.data.refreshToken
+      };
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      console.error('Refresh token error:', axiosError.response?.data || axiosError.message);
+
+      if (axiosError.response?.status === 401) {
+        clearToken();
+        return { success: false, message: "Refresh token expired. Please log in again." };
+      }
+
+      return { success: false, message: "Failed to refresh token. Please try again." };
+    }
   }
 };
