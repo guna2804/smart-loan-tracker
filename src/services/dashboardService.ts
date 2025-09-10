@@ -1,3 +1,5 @@
+import { RepaymentStatus } from '../types/repayment';
+
 // Dashboard Service for MoneyBoard API
 
 import httpClient from './httpClient';
@@ -21,7 +23,7 @@ export interface RecentTransaction {
   name: string;
   dueDate: string;
   amount: number;
-  status: string;
+  status: RepaymentStatus;
   direction: 'in' | 'out';
 }
 
@@ -85,8 +87,22 @@ export const dashboardService = {
     );
 
     const apiData = result.data.data;
+
+    const normalizeStatus = (status: string): RepaymentStatus => {
+      const lower = status.toLowerCase();
+      if (lower === 'early') return RepaymentStatus.Early;
+      if (lower === 'ontime') return RepaymentStatus.OnTime;
+      if (lower === 'late') return RepaymentStatus.Late;
+      return RepaymentStatus.Late; // default to Late for unknown
+    };
+
+    const normalizedTransactions = (apiData.transactions || []).map(t => ({
+      ...t,
+      status: normalizeStatus(t.status)
+    }));
+
     const data = {
-      data: apiData.transactions || [],
+      data: normalizedTransactions,
       totalCount: apiData.pagination?.total || 0,
       page: apiData.pagination?.page || 1,
       pageSize: apiData.pagination?.limit || 5,

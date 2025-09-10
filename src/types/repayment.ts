@@ -35,3 +35,9 @@ export interface RepaymentSummary {
   totalInterest: number;
   totalPrincipal: number;
 }
+
+export enum RepaymentStatus {
+  Early = 'Early',
+  OnTime = 'OnTime',
+  Late = 'Late'
+}

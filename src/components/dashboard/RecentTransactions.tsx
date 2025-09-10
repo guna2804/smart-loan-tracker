@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader } from '../ui/card';
-import { Chip } from '@mui/material';
+import { Badge } from '../ui/badge';
+import { RepaymentStatus } from '../../types/repayment';
 import { People as Users, TrendingUp, TrendingDown } from '@mui/icons-material';
 import type { RecentTransaction } from '../../services/dashboardService';
 
@@ -55,12 +56,18 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                 <p className="font-semibold text-gray-900">
                   ₹{(transaction.amount || 0).toLocaleString()}
                 </p>
-                <Chip
-                  label={transaction.status}
-                  color={transaction.status === "overdue" ? "error" : "default"}
-                  size="small"
-                  variant="outlined"
-                />
+                <Badge
+                  variant="secondary"
+                  className={
+                    transaction.status === RepaymentStatus.Early
+                      ? "bg-green-100 text-green-800 border-green-200"
+                      : transaction.status === RepaymentStatus.OnTime
+                      ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                      : "bg-red-100 text-red-800 border-red-200"
+                  }
+                >
+                  {transaction.status}
+                </Badge>
               </div>
             </div>
           ))
