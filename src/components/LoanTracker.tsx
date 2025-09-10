@@ -30,6 +30,7 @@ const LoanTracker = () => {
     totalCount,
     totalPages,
     fetchLoans,
+    fetchLoansSilent,
     deleteLoan,
     clearError,
   } = useLoans();
@@ -62,9 +63,9 @@ const LoanTracker = () => {
   };
 
   const handleFormSuccess = async () => {
-    // Refresh loan list with current role filter and pagination
+    // Refresh loan list silently with current role filter and pagination
     const role = activeTab === "lending" ? "Lender" : "Borrower";
-    await fetchLoans({
+    await fetchLoansSilent({
       role,
       page: currentPage,
       pageSize

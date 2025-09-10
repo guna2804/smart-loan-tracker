@@ -17,6 +17,12 @@ interface UseLoansReturn {
     page?: number;
     pageSize?: number;
   }) => Promise<void>;
+  fetchLoansSilent: (params?: {
+    role?: string;
+    status?: string;
+    page?: number;
+    pageSize?: number;
+  }) => Promise<void>;
   fetchOutstandingLoans: (params?: {
     page?: number;
     pageSize?: number;
@@ -62,6 +68,30 @@ export const useLoans = (): UseLoansReturn => {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch loans';
       setError(errorMessage);
       console.error('Error fetching loans:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchLoansSilent = useCallback(async (params: {
+    role?: string;
+    status?: string;
+    page?: number;
+    pageSize?: number;
+  } = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response: PagedLoanResponse = await loanService.getLoansSilent(params);
+      setLoans(response.loans);
+      setTotalCount(response.totalCount);
+      setPage(response.page);
+      setPageSize(response.pageSize);
+      setTotalPages(response.totalPages);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch loans';
+      setError(errorMessage);
+      console.error('Error fetching loans silently:', err);
     } finally {
       setLoading(false);
     }
@@ -188,6 +218,7 @@ export const useLoans = (): UseLoansReturn => {
     pageSize,
     totalPages,
     fetchLoans,
+    fetchLoansSilent,
     fetchOutstandingLoans,
     createLoan,
     updateLoan,

@@ -50,7 +50,7 @@ const RepaymentLog = () => {
   const fetchOutstandingLoans = async () => {
     try {
       setLoadingLoans(true);
-      const response = await loanService.getOutstandingLoans({ page: 1, pageSize: 25 });
+      const response = await loanService.getOutstandingLoansSilent({ page: 1, pageSize: 25 });
       const rawLoans = response?.loans || [];
       const loans = rawLoans.map(loan => ({
         ...loan,
@@ -89,7 +89,7 @@ const RepaymentLog = () => {
     }
     try {
       setLoadingRepayments(true);
-      const repaymentResponse = await repaymentService.getRepayments(loanId, { page: 1, pageSize: 25 });
+      const repaymentResponse = await repaymentService.getRepaymentsSilent(loanId, { page: 1, pageSize: 25 });
       setCurrentRepayments(repaymentResponse.repayments);
     } catch (err) {
       console.error(`Failed to fetch repayments for loan ${loanId}`, err);
@@ -107,7 +107,7 @@ const RepaymentLog = () => {
     }
     try {
       setLoadingSummary(true);
-      const summary = await repaymentService.getRepaymentSummary(loanId, role);
+      const summary = await repaymentService.getRepaymentSummarySilent(loanId, role);
       setSummaryData(summary);
     } catch (err) {
       console.error(`Failed to fetch repayment summary for loan ${loanId}`, err);

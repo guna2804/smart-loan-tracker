@@ -34,6 +34,28 @@ export const repaymentService = {
     return result.data.data;
   },
 
+  async getRepaymentsSilent(
+    loanId: string,
+    params: {
+      page?: number;
+      pageSize?: number;
+      sortBy?: string;
+      filter?: string;
+    } = {}
+  ): Promise<PagedRepaymentResponse> {
+    if (!loanId || loanId === 'undefined') {
+      throw new Error('Invalid loanId provided');
+    }
+    const result = await wrapServiceCall(
+      () => httpClient.get(`${API_BASE}/${loanId}/Repayment`, { params }),
+      { service: 'repaymentService', operation: 'getRepaymentsSilent', params: { loanId, ...params } },
+      true // Enable retry for fetching repayments
+    );
+
+    // Skip success toast for silent refreshes
+    return result.data.data;
+  },
+
   async getRepaymentSummary(
     loanId: string,
     role: 'lending' | 'borrowing' | 'all' = 'all'
@@ -54,6 +76,25 @@ export const repaymentService = {
       toastService.success("Repayment Summary Retrieved", result.data.message);
     }
 
+    return result.data.data;
+  },
+
+  async getRepaymentSummarySilent(
+    loanId: string,
+    role: 'lending' | 'borrowing' | 'all' = 'all'
+  ): Promise<RepaymentSummary> {
+    if (!loanId || loanId === 'undefined') {
+      throw new Error('Invalid loanId provided');
+    }
+    const result = await wrapServiceCall(
+      () => httpClient.get(`${API_BASE}/${loanId}/repayment/summary`, {
+        params: { role }
+      }),
+      { service: 'repaymentService', operation: 'getRepaymentSummarySilent', params: { loanId, role } },
+      true // Enable retry for repayment summary
+    );
+
+    // Skip success toast for silent refreshes
     return result.data.data;
   },
 

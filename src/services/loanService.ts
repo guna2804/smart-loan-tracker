@@ -91,6 +91,24 @@ export const loanService = {
     return result.data.data;
   },
 
+  async getLoansSilent(
+    params: {
+      role?: string;
+      status?: string;
+      page?: number;
+      pageSize?: number;
+    } = {}
+  ) {
+    const result = await wrapServiceCall(
+      () => httpClient.get(API_BASE, { params }),
+      { service: 'loanService', operation: 'getLoansSilent', params },
+      true // Enable retry for fetching loans
+    );
+
+    // Skip success toast for silent refreshes
+    return result.data.data;
+  },
+
   async getLoan(loanId: string) {
     const result = await wrapServiceCall(
       () => httpClient.get(`${API_BASE}/${loanId}`),
@@ -179,6 +197,22 @@ export const loanService = {
       toastService.success("Outstanding Loans Retrieved", result.data.message);
     }
 
+    return result.data.data || result.data;
+  },
+
+  async getOutstandingLoansSilent(
+    params: {
+      page?: number;
+      pageSize?: number;
+    } = {}
+  ): Promise<{ loans: OutstandingLoan[]; totalCount: number; page: number; pageSize: number; totalPages: number }> {
+    const result = await wrapServiceCall(
+      () => httpClient.get(`${API_BASE}/with-outstanding`, { params }),
+      { service: 'loanService', operation: 'getOutstandingLoansSilent', params },
+      true // Enable retry for outstanding loans
+    );
+
+    // Skip success toast for silent refreshes
     return result.data.data || result.data;
   },
 };
