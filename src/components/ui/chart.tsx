@@ -12,6 +12,7 @@ import {
   ArcElement,
 } from 'chart.js'
 import { Bar, Pie } from 'react-chartjs-2'
+import type { ChartOptions } from 'chart.js';
 
 import { cn } from "@/lib/utils"
 
@@ -51,7 +52,7 @@ const ChartContainer = React.forwardRef<
       data-chart={chartId}
       ref={ref}
       className={cn(
-        "flex aspect-video justify-center text-xs",
+        "flex justify-center text-xs",
         className
       )}
       {...props}
@@ -90,12 +91,16 @@ const ChartBar = React.forwardRef<
       backgroundColor: '#3b82f6',
       borderColor: '#ffffff',
       borderWidth: 1,
+      clip: 0,
     }],
   }
 
-  const options = {
+  const options: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+      padding: 8,
+    },
     plugins: {
       legend: {
         position: 'top' as const,
@@ -107,12 +112,31 @@ const ChartBar = React.forwardRef<
     scales: {
       y: {
         beginAtZero: true,
+        grid: {
+          drawTicks: false,
+        },
+        border: {
+          display: false,
+        },
+        ticks: {
+          padding: 6,
+        },
         title: {
           display: true,
           text: 'Amount',
         },
       },
       x: {
+        grid: {
+          drawTicks: false,
+        },
+        border: {
+          display: false,
+        },
+        ticks: {
+          padding: 6,
+          maxRotation: 0,
+        },
         title: {
           display: true,
           text: 'Month',
