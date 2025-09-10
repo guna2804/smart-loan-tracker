@@ -8,6 +8,7 @@ export const EMICalculator = () => {
   const {
     inputs,
     result,
+    error,
     updateInputs,
     calculate,
     resetCalculator,
@@ -53,7 +54,7 @@ export const EMICalculator = () => {
                 interestRate={inputs.interestRate}
                 loanTenure={inputs.loanTenure}
                 tenureType={inputs.tenureType}
-                onExport={exportData}
+                error={error}
               />
             </div>
           </div>

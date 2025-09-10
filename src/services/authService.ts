@@ -2,8 +2,8 @@
 // All API calls migrated to use Axios for consistency with other services
 // Uses httpClient instance with interceptors for auth token management
 
-import type { AxiosError } from 'axios';
 import httpClient, { setToken, clearToken } from './httpClient';
+import { wrapServiceCall } from '../utils/errorUtils';
 
 export interface LoginCredentials {
   email: string;
@@ -36,65 +36,71 @@ export interface AuthResponse {
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      // Use httpClient for auth endpoints (interceptors skip token addition for /auth/)
-      const response = await httpClient.post('/auth/login', {
-        email: credentials.email,
-        password: credentials.password
-      });
+      const result = await wrapServiceCall(
+        () => httpClient.post('/auth/login', {
+          email: credentials.email,
+          password: credentials.password
+        }),
+        { service: 'authService', operation: 'login', params: { email: credentials.email } }
+      );
 
       // Store token using httpClient utility
-      if (response.data.token) {
-        setToken(response.data.token, credentials.rememberMe);
+      if (result.data.data?.token) {
+        setToken(result.data.data.token, credentials.rememberMe);
       }
 
       return {
         success: true,
-        message: "Login successful",
-        user: response.data.user,
-        token: response.data.token,
-        email: response.data.email,
-        name: response.data.name
+        message: result.data.message || "Login successful",
+        user: result.data.data?.user,
+        token: result.data.data?.token,
+        email: result.data.data?.email,
+        name: result.data.data?.name
       };
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      console.error('Login error:', axiosError.response?.data || axiosError.message);
-
-      if (axiosError.response?.status === 401) {
-        return { success: false, message: "Invalid email or password" };
+      // For auth errors, we want to return a structured response instead of throwing
+      if (error instanceof Error && 'userMessage' in error) {
+        const apiError = error as { statusCode?: number; userMessage: string };
+        if (apiError.statusCode === 401) {
+          return { success: false, message: "Invalid email or password" };
+        }
+        return { success: false, message: apiError.userMessage };
       }
-
       return { success: false, message: "Login failed. Please try again." };
     }
   },
 
   async signup(data: SignupData): Promise<AuthResponse> {
     try {
-      // Use httpClient for auth endpoints (interceptors skip token addition for /auth/)
-      const response = await httpClient.post('/auth/register', {
-        email: data.email,
-        password: data.password,
-        name: data.fullName   // ✅ matches your backend RegisterDto
-      });
+      const result = await wrapServiceCall(
+        () => httpClient.post('/auth/register', {
+          email: data.email,
+          password: data.password,
+          name: data.fullName   // ✅ matches your backend RegisterDto
+        }),
+        { service: 'authService', operation: 'signup', params: { email: data.email, name: data.fullName } }
+      );
 
       // Store token using httpClient utility
-      if (response.data.token) {
-        setToken(response.data.token, false); // Default to sessionStorage for signup
+      if (result.data.data?.token) {
+        setToken(result.data.data.token, false); // Default to sessionStorage for signup
       }
 
       return {
         success: true,
-        message: "Account created successfully",
-        user: response.data.user,
-        token: response.data.token
+        message: result.data.message || "Account created successfully",
+        user: result.data.data?.user,
+        token: result.data.data?.token
       };
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      console.error('Signup error:', axiosError.response?.data || axiosError.message);
-
-      if (axiosError.response?.status === 400) {
-        return { success: false, message: "Registration failed. Please check your details and try again." };
+      // For auth errors, we want to return a structured response instead of throwing
+      if (error instanceof Error && 'userMessage' in error) {
+        const apiError = error as { statusCode?: number; userMessage: string };
+        if (apiError.statusCode === 400) {
+          return { success: false, message: "Registration failed. Please check your details and try again." };
+        }
+        return { success: false, message: apiError.userMessage };
       }
-
       return { success: false, message: "Registration failed. Please try again." };
     }
   },
@@ -176,89 +182,103 @@ export const authService = {
 
   async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
     try {
-      // Use httpClient for auth endpoints - token will be added via interceptor
-      await httpClient.post('/auth/change-password', {
-        currentPassword,
-        newPassword
-      });
+      const result = await wrapServiceCall(
+        () => httpClient.post('/auth/change-password', {
+          currentPassword,
+          newPassword
+        }),
+        { service: 'authService', operation: 'changePassword' }
+      );
 
-      return { success: true, message: "Password changed successfully" };
+      return { success: true, message: result.data.message || "Password changed successfully" };
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      console.error('Change password error:', axiosError.response?.data || axiosError.message);
-
-      if (axiosError.response?.status === 400) {
-        return { success: false, message: "Invalid current password or new password does not meet requirements" };
+      // For auth errors, we want to return a structured response instead of throwing
+      if (error instanceof Error && 'userMessage' in error) {
+        const apiError = error as { statusCode?: number; userMessage: string };
+        if (apiError.statusCode === 400) {
+          return { success: false, message: "Invalid current password or new password does not meet requirements" };
+        }
+        if (apiError.statusCode === 401) {
+          return { success: false, message: "Unauthorized. Please log in again." };
+        }
+        return { success: false, message: apiError.userMessage };
       }
-
-      if (axiosError.response?.status === 401) {
-        return { success: false, message: "Unauthorized. Please log in again." };
-      }
-
       return { success: false, message: "Failed to change password. Please try again." };
     }
   },
 
   async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
     try {
-      await httpClient.post('/auth/forgot-password', { email });
-      return { success: true, message: "Password reset instructions sent to your email" };
+      const result = await wrapServiceCall(
+        () => httpClient.post('/auth/forgot-password', { email }),
+        { service: 'authService', operation: 'forgotPassword', params: { email } }
+      );
+      return { success: true, message: result.data.message || "Password reset instructions sent to your email" };
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      console.error('Forgot password error:', axiosError.response?.data || axiosError.message);
-
-      if (axiosError.response?.status === 400) {
-        return { success: false, message: "Invalid email address" };
+      // For auth errors, we want to return a structured response instead of throwing
+      if (error instanceof Error && 'userMessage' in error) {
+        const apiError = error as { statusCode?: number; userMessage: string };
+        if (apiError.statusCode === 400) {
+          return { success: false, message: "Invalid email address" };
+        }
+        return { success: false, message: apiError.userMessage };
       }
-
       return { success: false, message: "Failed to send reset instructions. Please try again." };
     }
   },
 
   async resetPassword(email: string, token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
     try {
-      await httpClient.post('/auth/reset-password', {
-        email,
-        token,
-        newPassword
-      });
-      return { success: true, message: "Password reset successfully" };
+      const result = await wrapServiceCall(
+        () => httpClient.post('/auth/reset-password', {
+          email,
+          token,
+          newPassword
+        }),
+        { service: 'authService', operation: 'resetPassword', params: { email } }
+      );
+      return { success: true, message: result.data.message || "Password reset successfully" };
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      console.error('Reset password error:', axiosError.response?.data || axiosError.message);
-
-      if (axiosError.response?.status === 400) {
-        return { success: false, message: "Invalid token or password does not meet requirements" };
+      // For auth errors, we want to return a structured response instead of throwing
+      if (error instanceof Error && 'userMessage' in error) {
+        const apiError = error as { statusCode?: number; userMessage: string };
+        if (apiError.statusCode === 400) {
+          return { success: false, message: "Invalid token or password does not meet requirements" };
+        }
+        return { success: false, message: apiError.userMessage };
       }
-
       return { success: false, message: "Failed to reset password. Please try again." };
     }
   },
 
   async refreshToken(refreshToken: string): Promise<AuthResponse> {
     try {
-      const response = await httpClient.post('/auth/refresh', { refreshToken });
+      const result = await wrapServiceCall(
+        () => httpClient.post('/auth/refresh', { refreshToken }),
+        { service: 'authService', operation: 'refreshToken' }
+      );
 
       // Store new token
-      if (response.data.token) {
-        setToken(response.data.token, true); // Assume remember me for refresh
+      if (result.data.data?.token) {
+        setToken(result.data.data.token, true); // Assume remember me for refresh
       }
 
       return {
         success: true,
-        message: "Token refreshed successfully",
-        token: response.data.token,
-        refreshToken: response.data.refreshToken
+        message: result.data.message || "Token refreshed successfully",
+        token: result.data.data?.token,
+        refreshToken: result.data.data?.refreshToken
       };
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      console.error('Refresh token error:', axiosError.response?.data || axiosError.message);
-
-      if (axiosError.response?.status === 401) {
-        clearToken();
-        return { success: false, message: "Refresh token expired. Please log in again." };
+      // For auth errors, we want to return a structured response instead of throwing
+      if (error instanceof Error && 'userMessage' in error) {
+        const apiError = error as { statusCode?: number; userMessage: string };
+        if (apiError.statusCode === 401) {
+          clearToken();
+          return { success: false, message: "Refresh token expired. Please log in again." };
+        }
+        return { success: false, message: apiError.userMessage };
       }
-
       return { success: false, message: "Failed to refresh token. Please try again." };
     }
   }

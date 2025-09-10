@@ -6,19 +6,20 @@ import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Checkbox } from '../ui/checkbox';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useGlobalLoader } from '../../contexts/GlobalLoaderContext';
 import { useToast } from '../../hooks/use-toast';
 import { authService } from '../../services/authService';
 
 
 const LoginPage = () => {
+  const { showLoader, hideLoader } = useGlobalLoader();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ const LoginPage = () => {
       return;
     }
 
-    setIsLoading(true);
+    showLoader('Signing in...');
 
     try {
       const response = await login(email, password, rememberMe);
@@ -56,7 +57,7 @@ const LoginPage = () => {
     } catch {
       setError('Login failed. Please try again.');
     } finally {
-      setIsLoading(false);
+      hideLoader();
     }
   };
 
@@ -87,7 +88,6 @@ const LoginPage = () => {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
                 required
               />
             </div>
@@ -101,23 +101,20 @@ const LoginPage = () => {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
                   required
+                  className="pr-10"
                 />
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none focus:text-gray-700"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
+                    <EyeOff className="h-5 w-5" />
                   ) : (
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-5 w-5" />
                   )}
-                </Button>
+                </button>
               </div>
             </div>
 
@@ -127,7 +124,6 @@ const LoginPage = () => {
                   id="remember"
                   checked={rememberMe}
                   onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                  disabled={isLoading}
                 />
                 <Label
                   htmlFor="remember"
@@ -147,16 +143,8 @@ const LoginPage = () => {
             <Button
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={isLoading}
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                'Sign In'
-              )}
+              Sign In
             </Button>
           </form>
 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Tabs, Tab, Box, Typography } from "@mui/material";
 import { useToast } from "../hooks/use-toast";
-import { User, Settings as SettingsIcon, Shield, AlertCircle } from "lucide-react";
+import { Person, Settings as SettingsIcon, Security, ErrorOutline } from "@mui/icons-material";
 import SettingsHeader from "./settings/SettingsHeader";
 import ProfileTab from "./settings/ProfileTab";
 import PreferencesTab from "./settings/PreferencesTab";
@@ -23,6 +23,7 @@ interface UserPreferences {
 export default function Settings() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("profile");
   
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -154,63 +155,137 @@ export default function Settings() {
     }
   };
 
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
+    setActiveTab(newValue);
+  };
+
   if (!user) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">Not authenticated</h3>
-          <p className="mt-1 text-sm text-gray-500">Please log in to access settings.</p>
-        </div>
-      </div>
+      <Box display="flex" alignItems="center" justifyContent="center" minHeight="100vh">
+        <Box textAlign="center">
+          <ErrorOutline sx={{ fontSize: 48, color: 'text.secondary', mx: 'auto' }} />
+          <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>
+            Not authenticated
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+            Please log in to access settings.
+          </Typography>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <div className="container max-w-4xl mx-auto p-6 space-y-6">
+    <Box sx={{ maxWidth: 1024, mx: 'auto', p: 3, spaceY: 3 }}>
       <SettingsHeader />
 
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="profile" className="flex items-center space-x-2">
-            <User className="h-4 w-4" />
-            <span>Profile</span>
-          </TabsTrigger>
-          <TabsTrigger value="preferences" className="flex items-center space-x-2">
-            <SettingsIcon className="h-4 w-4" />
-            <span>Preferences</span>
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center space-x-2">
-            <Shield className="h-4 w-4" />
-            <span>Security</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="profile">
-          <ProfileTab
-            profileForm={profileForm}
-            setProfileForm={setProfileForm}
-            handleProfileUpdate={handleProfileUpdate}
-            isLoading={isLoading}
+      <Box sx={{ width: '100%' }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          sx={{
+            minHeight: 40,
+            '& .MuiTabs-indicator': {
+              height: 2,
+            },
+          }}
+        >
+          <Tab
+            value="profile"
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Person sx={{ mr: 1, fontSize: 16 }} />
+                Profile
+              </Box>
+            }
+            sx={{
+              minHeight: 32,
+              borderRadius: 0.5,
+              px: 3,
+              py: 1.5,
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              textTransform: 'none',
+              '&.Mui-selected': {
+                bgcolor: 'background.paper',
+                color: 'text.primary',
+                boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+              },
+            }}
           />
-        </TabsContent>
-
-        <TabsContent value="preferences">
-          <PreferencesTab
-            preferences={preferences}
-            setPreferences={setPreferences}
-            handlePreferencesUpdate={handlePreferencesUpdate}
-            isLoading={isLoading}
+          <Tab
+            value="preferences"
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <SettingsIcon sx={{ mr: 1, fontSize: 16 }} />
+                Preferences
+              </Box>
+            }
+            sx={{
+              minHeight: 32,
+              borderRadius: 0.5,
+              px: 3,
+              py: 1.5,
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              textTransform: 'none',
+              '&.Mui-selected': {
+                bgcolor: 'background.paper',
+                color: 'text.primary',
+                boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+              },
+            }}
           />
-        </TabsContent>
-
-        <TabsContent value="security">
-          <SecurityTab
-            handleDeleteAccount={handleDeleteAccount}
-            isLoading={isLoading}
+          <Tab
+            value="security"
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Security sx={{ mr: 1, fontSize: 16 }} />
+                Security
+              </Box>
+            }
+            sx={{
+              minHeight: 32,
+              borderRadius: 0.5,
+              px: 3,
+              py: 1.5,
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              textTransform: 'none',
+              '&.Mui-selected': {
+                bgcolor: 'background.paper',
+                color: 'text.primary',
+                boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+              },
+            }}
           />
-        </TabsContent>
-      </Tabs>
-    </div>
+        </Tabs>
+
+        <Box sx={{ mt: 2 }}>
+          {activeTab === "profile" && (
+            <ProfileTab
+              profileForm={profileForm}
+              setProfileForm={setProfileForm}
+              handleProfileUpdate={handleProfileUpdate}
+              isLoading={isLoading}
+            />
+          )}
+          {activeTab === "preferences" && (
+            <PreferencesTab
+              preferences={preferences}
+              setPreferences={setPreferences}
+              handlePreferencesUpdate={handlePreferencesUpdate}
+              isLoading={isLoading}
+            />
+          )}
+          {activeTab === "security" && (
+            <SecurityTab
+              handleDeleteAccount={handleDeleteAccount}
+              isLoading={isLoading}
+            />
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { dashboardService } from '../services/dashboardService';
+import { useGlobalLoader } from '../contexts/GlobalLoaderContext';
 import type {
   DashboardSummary,
   RecentTransaction,
@@ -17,7 +18,6 @@ interface UseDashboardReturn {
   monthlyRepayments: MonthlyRepaymentData[];
   loanStatusDistribution: LoanStatusDistribution[];
   alerts: Alert[];
-  loading: boolean;
   error: string | null;
   fetchSummary: () => Promise<void>;
   fetchRecentTransactions: (params?: { limit?: number; page?: number }) => Promise<void>;
@@ -29,13 +29,13 @@ interface UseDashboardReturn {
 }
 
 export const useDashboard = (): UseDashboardReturn => {
+  const { showLoader, hideLoader } = useGlobalLoader();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
   const [upcomingPayments, setUpcomingPayments] = useState<UpcomingPayment[]>([]);
   const [monthlyRepayments, setMonthlyRepayments] = useState<MonthlyRepaymentData[]>([]);
   const [loanStatusDistribution, setLoanStatusDistribution] = useState<LoanStatusDistribution[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const clearError = useCallback(() => {
@@ -43,7 +43,7 @@ export const useDashboard = (): UseDashboardReturn => {
   }, []);
 
   const fetchSummary = useCallback(async () => {
-    setLoading(true);
+    showLoader('Loading dashboard summary...');
     setError(null);
     try {
       const data = await dashboardService.getSummary();
@@ -51,14 +51,13 @@ export const useDashboard = (): UseDashboardReturn => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch dashboard summary';
       setError(errorMessage);
-      console.error('Error fetching dashboard summary:', err);
     } finally {
-      setLoading(false);
+      hideLoader();
     }
-  }, []);
+  }, [showLoader, hideLoader]);
 
   const fetchRecentTransactions = useCallback(async (params: { limit?: number; page?: number } = {}) => {
-    setLoading(true);
+    showLoader('Loading recent transactions...');
     setError(null);
     try {
       const response: PagedResponse<RecentTransaction> = await dashboardService.getRecentTransactions(params);
@@ -66,14 +65,13 @@ export const useDashboard = (): UseDashboardReturn => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch recent transactions';
       setError(errorMessage);
-      console.error('Error fetching recent transactions:', err);
     } finally {
-      setLoading(false);
+      hideLoader();
     }
-  }, []);
+  }, [showLoader, hideLoader]);
 
   const fetchUpcomingPayments = useCallback(async (params: { limit?: number; page?: number } = {}) => {
-    setLoading(true);
+    showLoader('Loading upcoming payments...');
     setError(null);
     try {
       const response: PagedResponse<UpcomingPayment> = await dashboardService.getUpcomingPayments(params);
@@ -81,14 +79,13 @@ export const useDashboard = (): UseDashboardReturn => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch upcoming payments';
       setError(errorMessage);
-      console.error('Error fetching upcoming payments:', err);
     } finally {
-      setLoading(false);
+      hideLoader();
     }
-  }, []);
+  }, [showLoader, hideLoader]);
 
   const fetchMonthlyRepayments = useCallback(async (year?: number) => {
-    setLoading(true);
+    showLoader('Loading monthly repayments...');
     setError(null);
     try {
       const data = await dashboardService.getMonthlyRepayments(year);
@@ -96,14 +93,13 @@ export const useDashboard = (): UseDashboardReturn => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch monthly repayments';
       setError(errorMessage);
-      console.error('Error fetching monthly repayments:', err);
     } finally {
-      setLoading(false);
+      hideLoader();
     }
-  }, []);
+  }, [showLoader, hideLoader]);
 
   const fetchLoanStatusDistribution = useCallback(async () => {
-    setLoading(true);
+    showLoader('Loading loan status distribution...');
     setError(null);
     try {
       const data = await dashboardService.getLoanStatusDistribution();
@@ -111,14 +107,13 @@ export const useDashboard = (): UseDashboardReturn => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch loan status distribution';
       setError(errorMessage);
-      console.error('Error fetching loan status distribution:', err);
     } finally {
-      setLoading(false);
+      hideLoader();
     }
-  }, []);
+  }, [showLoader, hideLoader]);
 
   const fetchAlerts = useCallback(async () => {
-    setLoading(true);
+    showLoader('Loading alerts...');
     setError(null);
     try {
       const data = await dashboardService.getAlerts();
@@ -126,11 +121,10 @@ export const useDashboard = (): UseDashboardReturn => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch alerts';
       setError(errorMessage);
-      console.error('Error fetching alerts:', err);
     } finally {
-      setLoading(false);
+      hideLoader();
     }
-  }, []);
+  }, [showLoader, hideLoader]);
 
   return {
     summary,
@@ -139,7 +133,6 @@ export const useDashboard = (): UseDashboardReturn => {
     monthlyRepayments,
     loanStatusDistribution,
     alerts,
-    loading,
     error,
     fetchSummary,
     fetchRecentTransactions,

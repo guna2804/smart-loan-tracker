@@ -1,53 +1,110 @@
 import * as React from "react"
-import * as TabsPrimitive from "@radix-ui/react-tabs"
+import { Tabs as MuiTabs, Tab, Box } from "@mui/material"
 
-import { cn } from "@/lib/utils"
+interface TabsProps {
+  value?: string
+  onValueChange?: (value: string) => void
+  children: React.ReactNode
+}
 
-const Tabs = TabsPrimitive.Root
+const Tabs: React.FC<TabsProps> = ({ value, onValueChange, children }) => {
+  const handleChange = (_event: React.SyntheticEvent, newValue: string) => {
+    onValueChange?.(newValue)
+  }
 
-const TabsList = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.List>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.List
-    ref={ref}
-    className={cn(
-      "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
-      className
-    )}
-    {...props}
-  />
-))
-TabsList.displayName = TabsPrimitive.List.displayName
+  let tabsListClassName = ''
+  const tabs = React.Children.map(children, (child) => {
+    if (React.isValidElement(child) && child.type === TabsList) {
+      tabsListClassName = child.props.className || ''
+      return child.props.children
+    }
+    return null
+  })
 
-const TabsTrigger = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
-      className
-    )}
-    {...props}
-  />
-))
-TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
+  return (
+    <Box sx={{ width: '100%' }}>
+      <MuiTabs
+        value={value}
+        onChange={handleChange}
+        className={tabsListClassName}
+        sx={{
+          minHeight: 40,
+          '& .MuiTabs-indicator': {
+            height: 2,
+          },
+        }}
+      >
+        {tabs}
+      </MuiTabs>
 
-const TabsContent = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Content
-    ref={ref}
-    className={cn(
-      "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-      className
-    )}
-    {...props}
-  />
-))
-TabsContent.displayName = TabsPrimitive.Content.displayName
+      <Box sx={{ mt: 2 }}>
+        {React.Children.map(children, (child) => {
+          if (React.isValidElement(child) && child.type === TabsContent && child.props.value === value) {
+            return child
+          }
+          return null
+        })}
+      </Box>
+    </Box>
+  )
+}
+
+interface TabsListProps {
+  children: React.ReactNode
+  className?: string
+}
+
+const TabsList: React.FC<TabsListProps> = ({ children, className }) => {
+  return (
+    <Box className={className}>
+      {children}
+    </Box>
+  )
+}
+
+interface TabsTriggerProps {
+  value: string
+  children: React.ReactNode
+  className?: string
+}
+
+const TabsTrigger: React.FC<TabsTriggerProps> = ({ value, children, className }) => {
+  return (
+    <Tab
+      value={value}
+      label={children}
+      sx={{
+        minHeight: 32,
+        borderRadius: 0.5,
+        px: 3,
+        py: 1.5,
+        fontSize: '0.875rem',
+        fontWeight: 500,
+        textTransform: 'none',
+        '&.Mui-selected': {
+          bgcolor: 'background.paper',
+          color: 'text.primary',
+          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+        },
+      }}
+      className={className}
+    />
+  )
+}
+
+interface TabsContentProps {
+  value: string
+  children: React.ReactNode
+  className?: string
+}
+
+const TabsContent: React.FC<TabsContentProps> = ({ value, children, className }) => {
+  // This component will be rendered conditionally by the parent Tabs component
+  return (
+    <Box sx={{ mt: 2 }} className={className} data-tab-value={value}>
+      {children}
+    </Box>
+  )
+}
 
 export { Tabs, TabsList, TabsTrigger, TabsContent }

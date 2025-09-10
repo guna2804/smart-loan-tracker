@@ -1,28 +1,35 @@
 import * as React from "react";
-import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-import { Check } from "lucide-react";
+import { Checkbox as MuiCheckbox } from "@mui/material";
+import type { CheckboxProps as MuiCheckboxProps } from "@mui/material";
 
-import { cn } from "@/lib/utils";
+export interface CheckboxProps extends Omit<MuiCheckboxProps, "onChange"> {
+  onCheckedChange?: (checked: boolean) => void;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+}
 
-const Checkbox = React.forwardRef<
-  React.ElementRef<typeof CheckboxPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <CheckboxPrimitive.Root
-    ref={ref}
-    className={cn(
-      "peer h-4 w-4 p-0 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
-      className
-    )}
-    {...props}
-  >
-    <CheckboxPrimitive.Indicator
-      className={cn("flex items-center justify-center text-current")}
-    >
-      <Check className="h-4 w-4" />
-    </CheckboxPrimitive.Indicator>
-  </CheckboxPrimitive.Root>
-));
-Checkbox.displayName = CheckboxPrimitive.Root.displayName;
+const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
+  ({ onCheckedChange, ...props }, ref) => {
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      onCheckedChange?.(event.target.checked);
+      props.onChange?.(event);
+    };
+
+    return (
+      <MuiCheckbox
+        ref={ref}
+        onChange={handleChange}
+        sx={{
+          padding: 0,
+          '& .MuiSvgIcon-root': {
+            fontSize: '1rem',
+          },
+        }}
+        {...props}
+      />
+    );
+  }
+);
+
+Checkbox.displayName = "Checkbox";
 
 export { Checkbox };

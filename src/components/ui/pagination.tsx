@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHoriz as MoreHorizontal } from "@mui/icons-material";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants, type ButtonProps } from "@/components/ui/button";

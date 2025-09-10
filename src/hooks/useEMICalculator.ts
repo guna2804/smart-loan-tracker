@@ -31,42 +31,76 @@ export const useEMICalculator = () => {
     targetEMI: '',
     interestType: 'compound'
   });
-  
+
   const [result, setResult] = useState<EMIResult|null>(null);
+  const [error, setError] = useState<string>('');
 
   const updateInputs = useCallback((newInputs: Partial<CalculatorInputs>) => {
     setInputs(prev => ({ ...prev, ...newInputs }));
     setResult(null);
+    setError('');
   }, []);
 
   const calculate = useCallback(() => {
     try {
-      const principal = parseFloat(inputs.loanAmount) || 0;
-      const rate = parseFloat(inputs.interestRate) || 0;
+      const principal = parseFloat(inputs.loanAmount);
+      const rate = parseFloat(inputs.interestRate);
       const tenure = inputs.tenureType === 'years'
         ? (parseFloat(inputs.loanTenure) || 0) * 12
         : parseFloat(inputs.loanTenure) || 0;
+      const targetEMI = parseFloat(inputs.targetEMI);
 
-      if (principal > 0 && rate >= 0 && tenure > 0) {
-        if (inputs.calculationType === 'emi') {
-          setResult(calculateEMI(principal, rate, tenure, inputs.interestType));
+      // Validation checks
+      if (isNaN(principal) || principal <= 0) {
+        setError('Please enter a valid loan amount greater than 0.');
+        setResult(null);
+        return;
+      }
+
+      if (isNaN(rate) || rate < 0 || rate > 50) {
+        setError('Please enter a valid interest rate between 0% and 50%.');
+        setResult(null);
+        return;
+      }
+
+      if (isNaN(tenure) || tenure <= 0 || tenure > 360) {
+        setError('Please enter a valid tenure between 1 and 360 months.');
+        setResult(null);
+        return;
+      }
+
+      if (inputs.calculationType !== 'emi' && (isNaN(targetEMI) || targetEMI <= 0)) {
+        setError('Please enter a valid target EMI amount greater than 0.');
+        setResult(null);
+        return;
+      }
+
+      // Clear any previous errors
+      setError('');
+
+      if (inputs.calculationType === 'emi') {
+        setResult(calculateEMI(principal, rate, tenure, inputs.interestType));
+      }
+      else if (inputs.calculationType === 'loan-amount' && inputs.targetEMI) {
+        const emi = targetEMI;
+        const maxLoan = calculateMaxLoanAmount(emi, rate, tenure, inputs.interestType);
+        updateInputs({ loanAmount: maxLoan.toFixed(0) });
+        setResult(calculateEMI(maxLoan, rate, tenure, inputs.interestType));
+      }
+      else if (inputs.calculationType === 'tenure' && inputs.targetEMI) {
+        const emi = targetEMI;
+        const requiredTenure = calculateTenure(principal, emi, rate, inputs.interestType);
+        if (requiredTenure <= 0 || requiredTenure > 360) {
+          setError('Unable to calculate tenure with the given parameters. Please adjust your inputs.');
+          setResult(null);
+          return;
         }
-        else if (inputs.calculationType === 'loan-amount' && inputs.targetEMI) {
-          const emi = parseFloat(inputs.targetEMI);
-          const maxLoan = calculateMaxLoanAmount(emi, rate, tenure, inputs.interestType);
-          updateInputs({ loanAmount: maxLoan.toFixed(0) });
-          setResult(calculateEMI(maxLoan, rate, tenure, inputs.interestType));
-        }
-        else if (inputs.calculationType === 'tenure' && inputs.targetEMI) {
-          const emi = parseFloat(inputs.targetEMI);
-          const requiredTenure = calculateTenure(principal, emi, rate, inputs.interestType);
-          updateInputs({ loanTenure: Math.ceil(requiredTenure).toString() });
-          setResult(calculateEMI(principal, rate, Math.ceil(requiredTenure), inputs.interestType));
-        }
+        updateInputs({ loanTenure: Math.ceil(requiredTenure).toString() });
+        setResult(calculateEMI(principal, rate, Math.ceil(requiredTenure), inputs.interestType));
       }
     } catch (error) {
       console.error('EMI calculation error:', error);
-      // Could add toast notification here if needed
+      setError('An error occurred during calculation. Please check your inputs and try again.');
       setResult(null);
     }
   }, [inputs, updateInputs]);
@@ -82,6 +116,7 @@ export const useEMICalculator = () => {
       interestType: 'compound'
     });
     setResult(null);
+    setError('');
   }, [updateInputs]);
 
   const exportData = useCallback(() => {
@@ -98,9 +133,10 @@ export const useEMICalculator = () => {
 
   // Note: EMI calculation is now manual via button click for better UX
 
-  return { 
+  return {
     inputs,
     result,
+    error,
     updateInputs,
     calculate,
     resetCalculator,

@@ -5,11 +5,13 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Loader2, Eye, EyeOff, Check, X } from 'lucide-react';
+import { Eye, EyeOff, Check, X } from 'lucide-react';
 import { authService } from '../../services/authService';
+import { useGlobalLoader } from '../../contexts/GlobalLoaderContext';
 import { useToast } from '../../hooks/use-toast';
 
 const SignUpPage = () => {
+  const { showLoader, hideLoader } = useGlobalLoader();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -19,7 +21,6 @@ const SignUpPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -69,7 +70,7 @@ const SignUpPage = () => {
       return;
     }
 
-    setIsLoading(true);
+    showLoader('Creating account...');
 
     try {
       const response = await authService.signup(formData);
@@ -90,7 +91,7 @@ const SignUpPage = () => {
     } catch {
       setError('Registration failed. Please try again.');
     } finally {
-      setIsLoading(false);
+      hideLoader();
     }
   };
 
@@ -123,7 +124,6 @@ const SignUpPage = () => {
                 placeholder="Enter your full name"
                 value={formData.fullName}
                 onChange={(e) => handleInputChange('fullName', e.target.value)}
-                disabled={isLoading}
                 required
               />
             </div>
@@ -136,7 +136,6 @@ const SignUpPage = () => {
                 placeholder="Enter your email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                disabled={isLoading}
                 required
               />
             </div>
@@ -150,23 +149,22 @@ const SignUpPage = () => {
                   placeholder="Enter your password"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  disabled={isLoading}
+                  
                   required
+                  className="pr-10"
                 />
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none focus:text-gray-700"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
+                  
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
                   ) : (
                     <Eye className="h-4 w-4" />
                   )}
-                </Button>
+                </button>
               </div>
               {formData.password && (
                 <div className="space-y-1 text-sm">
@@ -233,23 +231,22 @@ const SignUpPage = () => {
                   placeholder="Confirm your password"
                   value={formData.confirmPassword}
                   onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                  disabled={isLoading}
+                  
                   required
+                  className="pr-10"
                 />
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none focus:text-gray-700"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  disabled={isLoading}
+                  
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4 w-4" />
                   ) : (
                     <Eye className="h-4 w-4" />
                   )}
-                </Button>
+                </button>
               </div>
               {formData.confirmPassword && (
                 <div className="flex items-center space-x-2 text-sm">
@@ -268,16 +265,9 @@ const SignUpPage = () => {
             <Button
               type="submit"
               className="w-full bg-green-600 hover:bg-green-700"
-              disabled={isLoading}
+              
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
-                </>
-              ) : (
-                'Create Account'
-              )}
+              Create Account
             </Button>
           </form>
 

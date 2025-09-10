@@ -1,29 +1,67 @@
 import * as React from "react"
-import * as PopoverPrimitive from "@radix-ui/react-popover"
+import { Popover as MuiPopover } from "@mui/material"
 
-import { cn } from "@/lib/utils"
+interface PopoverPropsCustom {
+  children: React.ReactNode
+}
 
-const Popover = PopoverPrimitive.Root
+const Popover: React.FC<PopoverPropsCustom> = ({ children }) => {
+  return <>{children}</>
+}
 
-const PopoverTrigger = PopoverPrimitive.Trigger
+interface PopoverTriggerProps {
+  children: React.ReactNode
+  onClick?: (event: React.MouseEvent<HTMLElement>) => void
+}
 
-const PopoverContent = React.forwardRef<
-  React.ElementRef<typeof PopoverPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
->(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
-  <PopoverPrimitive.Portal>
-    <PopoverPrimitive.Content
-      ref={ref}
-      align={align}
-      sideOffset={sideOffset}
-      className={cn(
-        "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-popover-content-transform-origin]",
-        className
-      )}
-      {...props}
-    />
-  </PopoverPrimitive.Portal>
-))
-PopoverContent.displayName = PopoverPrimitive.Content.displayName
+const PopoverTrigger: React.FC<PopoverTriggerProps> = ({ children, onClick }) => {
+  return (
+    <div onClick={onClick} style={{ cursor: 'pointer' }}>
+      {children}
+    </div>
+  )
+}
+
+interface PopoverContentProps {
+  anchorEl?: HTMLElement | null
+  open?: boolean
+  onClose?: () => void
+  children: React.ReactNode
+  className?: string
+}
+
+const PopoverContent: React.FC<PopoverContentProps> = ({
+  anchorEl,
+  open,
+  onClose,
+  children,
+  className
+}) => {
+  return (
+    <MuiPopover
+      open={open || false}
+      anchorEl={anchorEl}
+      onClose={onClose}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'center',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'center',
+      }}
+      PaperProps={{
+        sx: {
+          p: 2,
+          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+          borderRadius: 1,
+        },
+        className,
+      }}
+    >
+      {children}
+    </MuiPopover>
+  )
+}
 
 export { Popover, PopoverTrigger, PopoverContent }

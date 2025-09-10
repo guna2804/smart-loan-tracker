@@ -1,7 +1,14 @@
 import { SidebarContent } from "./ui/sidebar";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Button } from "./ui/button";
-import { LayoutDashboard, HandCoins, History, Calculator, Settings, Shield, LogOut } from "lucide-react";
+import {
+  Dashboard as LayoutDashboard,
+  Handshake as HandCoins,
+  History,
+  Calculate as Calculator,
+  Settings,
+  Security as Shield,
+  Logout as LogOut
+} from "@mui/icons-material";
 import { useAuth } from "../contexts/AuthContext";
 
 const navigation = [
@@ -27,7 +34,7 @@ function SidebarMenu() {
 			<div className="flex items-center px-6 py-8 border-b border-gray-200">
 				<div className="flex items-center space-x-3">
 					<div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-600 to-green-600 rounded-lg">
-						<Shield className="w-6 h-6 text-white" />
+						<Shield sx={{ fontSize: 24, color: 'white' }} />
 					</div>
 					<div>
 						<h1 className="text-xl font-bold text-gray-900">MoneyBoard</h1>
@@ -49,7 +56,7 @@ function SidebarMenu() {
 									: "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
 							}`}
 						>
-							<item.icon className={`mr-3 h-5 w-5 ${isActive ? "text-blue-600" : "text-gray-500"}`} />
+							<item.icon sx={{ mr: 1.5, fontSize: 20, color: isActive ? 'primary.main' : 'text.secondary' }} />
 							{item.name}
 						</Link>
 					);
@@ -61,17 +68,16 @@ function SidebarMenu() {
 					to="/settings"
 					className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200"
 				>
-					<Settings className="mr-3 h-5 w-5 text-gray-500" />
+					<Settings sx={{ mr: 1.5, fontSize: 20, color: 'text.secondary' }} />
 					Settings
 				</Link>
-				<Button
+				<button
 					onClick={handleLogout}
-					variant="ghost"
-					className="w-full justify-start px-4 py-3 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50"
+					className="flex items-center w-full px-4 py-3 text-sm font-medium text-red-600 rounded-lg hover:text-red-700 hover:bg-red-50 transition-colors duration-200"
 				>
-					<LogOut className="mr-3 h-5 w-5" />
+					<LogOut sx={{ mr: 1.5, fontSize: 20 }} />
 					Logout
-				</Button>
+				</button>
 			</div>
 		</SidebarContent>
 	);

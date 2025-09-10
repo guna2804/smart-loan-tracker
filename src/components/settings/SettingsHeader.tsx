@@ -1,5 +1,5 @@
 import React from "react";
-import { Settings as SettingsIcon } from "lucide-react";
+import { Settings as SettingsIcon } from "@mui/icons-material";
 
 export default function SettingsHeader() {
   return (

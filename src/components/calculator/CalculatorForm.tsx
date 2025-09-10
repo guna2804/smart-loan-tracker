@@ -120,32 +120,34 @@ export const CalculatorForm = ({
           </Select>
         </div>
 
-        {calculationType !== 'tenure' && (
-          <div className="space-y-2">
-            <Label>Loan Tenure</Label>
-            <div className="flex space-x-2">
-              <Input
-                type="number"
-                value={loanTenure}
-                onChange={(e) => onInputChange('loanTenure', e.target.value)}
-                placeholder="12"
-                className="flex-1"
-              />
-              <Select 
-                value={tenureType} 
-                onValueChange={(value) => onInputChange('tenureType', value)}
-              >
-                <SelectTrigger className="w-24">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="months">Months</SelectItem>
-                  <SelectItem value="years">Years</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="space-y-2">
+          <Label>Loan Tenure</Label>
+          <div className="flex space-x-2">
+            <Input
+              type="number"
+              value={loanTenure}
+              onChange={(e) => onInputChange('loanTenure', e.target.value)}
+              placeholder="12"
+              className="flex-1"
+              disabled={calculationType === 'tenure'}
+            />
+            <Select
+              value={tenureType}
+              onValueChange={(value) => onInputChange('tenureType', value)}
+            >
+              <SelectTrigger className="w-24">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="months">Months</SelectItem>
+                <SelectItem value="years">Years</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        )}
+          {calculationType === 'tenure' && (
+            <p className="text-sm text-gray-600">Tenure will be calculated based on your inputs</p>
+          )}
+        </div>
 
         {onCustomCalculate && (
           <button

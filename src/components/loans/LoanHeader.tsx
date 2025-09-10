@@ -1,5 +1,5 @@
 import { Button } from "../ui/button";
-import { Plus } from "lucide-react";
+import { Add as Plus } from "@mui/icons-material";
 
 interface LoanHeaderProps {
   onAddLoan: () => void;

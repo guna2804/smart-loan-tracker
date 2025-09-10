@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { authService } from '../services/authService';
 import { jwtDecode } from 'jwt-decode';
+import { toastService } from '../utils/toastService';
 
 export interface User {
   id: string;
@@ -115,12 +116,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem(authTokenKey, response.token);
         localStorage.setItem('userData', JSON.stringify(userData));
         setUser(userData);
+
+        // Show success toast with API's message
+        toastService.success("Login Successful", response.message);
+
         setIsLoading(false);
         return true;
+      } else {
+        // Handle auth service error responses (like invalid credentials)
+        if (response.message) {
+          toastService.error("Login Failed", response.message);
+        }
+        setIsLoading(false);
+        return false;
       }
-      setIsLoading(false);
-      return false;
-    } catch {
+    } catch (error) {
+      // Handle unexpected errors from authService
+      if (error instanceof Error && 'userMessage' in error) {
+        const apiError = error as { userMessage: string };
+        toastService.error("Login Failed", apiError.userMessage);
+      } else {
+        toastService.error("Login Failed", "An unexpected error occurred. Please try again.");
+      }
       setIsLoading(false);
       return false;
     }
@@ -130,23 +147,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     try {
       const response = await authService.signup({ fullName, email, password, confirmPassword: password });
-      if (response.success && response.token && response.user) {
+      if (response.success && response.token) {
         const authTokenKey = import.meta.env.VITE_AUTH_TOKEN_KEY || 'authToken';
         localStorage.setItem(authTokenKey, response.token);
+        const decoded: DecodedToken = jwtDecode(response.token);
         const mappedUser = {
-          id: response.user.id,
-          email: response.user.email,
-          fullName: response.user.name
+          id: decoded.userId || decoded.sub || '',
+          email: response.email || decoded.sub || '',
+          fullName: response.name || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || decoded.name || fullName
         };
         localStorage.setItem('userData', JSON.stringify(mappedUser));
         setUser(mappedUser);
+
+        // Show success toast with API's message
+        toastService.success("Account Created", response.message);
+
         setIsLoading(false);
         return true;
+      } else {
+        // Handle auth service error responses
+        if (response.message) {
+          toastService.error("Signup Failed", response.message);
+        }
+        setIsLoading(false);
+        return false;
       }
-      setIsLoading(false);
-      return false;
     } catch (error) {
-      console.error('Signup error:', error);
+      // Handle unexpected errors from authService
+      if (error instanceof Error && 'userMessage' in error) {
+        const apiError = error as { userMessage: string };
+        toastService.error("Signup Failed", apiError.userMessage);
+      } else {
+        toastService.error("Signup Failed", "An unexpected error occurred. Please try again.");
+      }
       setIsLoading(false);
       return false;
     }
@@ -162,15 +195,51 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const forgotPassword = async (email: string) => {
-    return await authService.forgotPassword(email);
+    try {
+      const result = await authService.forgotPassword(email);
+      if (result.success) {
+        toastService.success("Password Reset", result.message);
+      }
+      return result;
+    } catch (error) {
+      if (error instanceof Error && 'userMessage' in error) {
+        const apiError = error as { userMessage: string };
+        toastService.error("Forgot Password Failed", apiError.userMessage);
+      }
+      return { success: false, message: "Failed to send reset instructions. Please try again." };
+    }
   };
 
   const resetPassword = async (email: string, token: string, newPassword: string) => {
-    return await authService.resetPassword(email, token, newPassword);
+    try {
+      const result = await authService.resetPassword(email, token, newPassword);
+      if (result.success) {
+        toastService.success("Password Reset", result.message);
+      }
+      return result;
+    } catch (error) {
+      if (error instanceof Error && 'userMessage' in error) {
+        const apiError = error as { userMessage: string };
+        toastService.error("Reset Password Failed", apiError.userMessage);
+      }
+      return { success: false, message: "Failed to reset password. Please try again." };
+    }
   };
 
   const changePassword = async (currentPassword: string, newPassword: string) => {
-    return await authService.changePassword(currentPassword, newPassword);
+    try {
+      const result = await authService.changePassword(currentPassword, newPassword);
+      if (result.success) {
+        toastService.success("Password Changed", result.message);
+      }
+      return result;
+    } catch (error) {
+      if (error instanceof Error && 'userMessage' in error) {
+        const apiError = error as { userMessage: string };
+        toastService.error("Change Password Failed", apiError.userMessage);
+      }
+      return { success: false, message: "Failed to change password. Please try again." };
+    }
   };
 
   const value = {

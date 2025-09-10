@@ -1,29 +1,66 @@
 "use client"
 
 import * as React from "react"
-import * as HoverCardPrimitive from "@radix-ui/react-hover-card"
+import { Tooltip } from "@mui/material"
 
-import { cn } from "@/lib/utils"
+interface HoverCardProps {
+  children: React.ReactNode
+}
 
-const HoverCard = HoverCardPrimitive.Root
+const HoverCard: React.FC<HoverCardProps> = ({ children }) => {
+  return <>{children}</>
+}
 
-const HoverCardTrigger = HoverCardPrimitive.Trigger
+interface HoverCardTriggerProps {
+  children: React.ReactNode
+  asChild?: boolean
+}
 
-const HoverCardContent = React.forwardRef<
-  React.ElementRef<typeof HoverCardPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Content>
->(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
-  <HoverCardPrimitive.Content
-    ref={ref}
-    align={align}
-    sideOffset={sideOffset}
-    className={cn(
-      "z-50 w-64 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-hover-card-content-transform-origin]",
-      className
-    )}
-    {...props}
-  />
-))
-HoverCardContent.displayName = HoverCardPrimitive.Content.displayName
+const HoverCardTrigger: React.FC<HoverCardTriggerProps> = ({ children }) => {
+  return <>{children}</>
+}
+
+interface HoverCardContentProps {
+  children: React.ReactNode
+  className?: string
+  title?: string
+}
+
+const HoverCardContent: React.FC<HoverCardContentProps> = ({
+  children,
+  className,
+  title
+}) => {
+  return (
+    <Tooltip
+      title={title || ""}
+      placement="top"
+      arrow
+      sx={{
+        '& .MuiTooltip-tooltip': {
+          backgroundColor: 'background.paper',
+          color: 'text.primary',
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+          borderRadius: 1,
+          p: 2,
+          maxWidth: 256,
+        },
+        '& .MuiTooltip-arrow': {
+          color: 'background.paper',
+          '&::before': {
+            border: '1px solid',
+            borderColor: 'divider',
+            backgroundColor: 'background.paper',
+          },
+        },
+      }}
+      className={className}
+    >
+      <div>{children}</div>
+    </Tooltip>
+  )
+}
 
 export { HoverCard, HoverCardTrigger, HoverCardContent }

@@ -1,6 +1,6 @@
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
-import { TrendingUp, TrendingDown, Plus } from "lucide-react";
+import { TrendingUp, TrendingDown, Add as Plus } from "@mui/icons-material";
 
 interface EmptyStateProps {
   activeTab: string;
