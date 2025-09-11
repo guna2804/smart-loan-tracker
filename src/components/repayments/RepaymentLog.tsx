@@ -178,6 +178,13 @@ const RepaymentLog = () => {
         setCurrentRepayments([newRepayment, ...currentRepayments]);
       }
 
+      // Refetch data to ensure UI is updated with latest backend state
+      await fetchOutstandingLoans();
+      if (selectedLoanId) {
+        await fetchRepaymentsForLoan(selectedLoanId);
+        await fetchRepaymentSummary(selectedLoanId, 'all');
+      }
+
       // Close modal and reset form on successful submission
       setIsDialogOpen(false);
       setFormData({
