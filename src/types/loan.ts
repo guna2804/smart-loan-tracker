@@ -15,6 +15,10 @@ export interface Loan {
   totalAmount: number;
   notes?: string;
   hasRepaymentStarted: boolean;
+  totalPrincipalRepaid?: number;
+  totalInterestPaid?: number;
+  outstandingBalance?: number;
+  nextDueDate?: string;
 }
 
 export interface PagedLoanResponse {

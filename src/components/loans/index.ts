@@ -4,4 +4,6 @@ export { AmendLoanDialog } from './AmendLoanDialog';
 export { LoanTabs } from './LoanTabs';
 export { LoanList } from './LoanList';
 export { LoanCard } from './LoanCard';
+export { LoanTable } from './LoanTable';
+export { LoanDetailsModal } from './LoanDetailsModal';
 export { EmptyState } from './EmptyState';
