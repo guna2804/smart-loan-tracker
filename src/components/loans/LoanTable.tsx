@@ -41,7 +41,7 @@ export const LoanTable = ({ loans, onEdit, onDelete, onViewDetails }: LoanTableP
   };
 
   return (
-    <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+    <div className="bg-white shadow-sm rounded-lg">
       <Table>
         <TableHeader>
           <TableRow>
